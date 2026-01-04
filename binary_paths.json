@@ -23,6 +23,14 @@
     "linux/x64/ffmpeg/ffmpeg",
     "linux/x64/ffmpeg/ffprobe"
   ],
+  "linux_ia32_ffmpeg": [
+    "linux/ia32/ffmpeg/ffmpeg",
+    "linux/ia32/ffmpeg/ffprobe"
+  ],
+  "linux_arm_ffmpeg": [
+    "linux/arm/ffmpeg/ffmpeg",
+    "linux/arm/ffmpeg/ffprobe"
+  ],
   "linux_arm64_ffmpeg": [
     "linux/arm64/ffmpeg/ffmpeg",
     "linux/arm64/ffmpeg/ffprobe"
@@ -34,16 +42,16 @@
     "windows/x64/bento4/mp4encrypt.exe"
   ],
   "windows_x86_bento4": [
-    "windows/x86/bento4/mp4dump.exe",
-    "windows/x86/bento4/mp4info.exe",
     "windows/x86/bento4/mp4decrypt.exe",
-    "windows/x86/bento4/mp4encrypt.exe"
+    "windows/x86/bento4/mp4dump.exe",
+    "windows/x86/bento4/mp4encrypt.exe",
+    "windows/x86/bento4/mp4info.exe"
   ],
   "windows_arm64_bento4": [
-    "windows/arm64/bento4/mp4dump.exe",
-    "windows/arm64/bento4/mp4info.exe",
     "windows/arm64/bento4/mp4decrypt.exe",
-    "windows/arm64/bento4/mp4encrypt.exe"
+    "windows/arm64/bento4/mp4dump.exe",
+    "windows/arm64/bento4/mp4encrypt.exe",
+    "windows/arm64/bento4/mp4info.exe"
   ],
   "darwin_x64_bento4": [
     "darwin/x64/bento4/mp4encrypt",
@@ -62,6 +70,18 @@
     "linux/x64/bento4/mp4dump",
     "linux/x64/bento4/mp4encrypt",
     "linux/x64/bento4/mp4info"
+  ],
+  "linux_ia32_bento4": [
+    "linux/ia32/bento4/mp4decrypt",
+    "linux/ia32/bento4/mp4dump",
+    "linux/ia32/bento4/mp4encrypt",
+    "linux/ia32/bento4/mp4info"
+  ],
+  "linux_arm_bento4": [
+    "linux/arm/bento4/mp4decrypt",
+    "linux/arm/bento4/mp4dump",
+    "linux/arm/bento4/mp4encrypt",
+    "linux/arm/bento4/mp4info"
   ],
   "linux_arm64_bento4": [
     "linux/arm64/bento4/mp4decrypt",
@@ -86,6 +106,12 @@
   ],
   "linux_x64_megatools": [
     "linux/x64/megatools/megatools"
+  ],
+  "linux_ia32_megatools": [
+    "linux/ia32/megatools/megatools"
+  ],
+  "linux_arm_megatools": [
+    "linux/arm/megatools/megatools"
   ],
   "linux_arm64_megatools": [
     "linux/arm64/megatools/megatools"

@@ -89,6 +89,27 @@
     "linux/arm64/bento4/mp4encrypt",
     "linux/arm64/bento4/mp4info"
   ],
+  "windows_x64_n_m3u8dl": [
+    "windows/x64/n_m3u8dl/N_m3u8DL-RE.exe"
+  ],
+  "windows_x86_n_m3u8dl": [
+    "windows/x86/n_m3u8dl/N_m3u8DL-RE.exe"
+  ],
+  "windows_arm64_n_m3u8dl": [
+    "windows/arm64/n_m3u8dl/N_m3u8DL-RE.exe"
+  ],
+  "darwin_x64_n_m3u8dl": [
+    "darwin/x64/n_m3u8dl/N_m3u8DL-RE"
+  ],
+  "darwin_arm64_n_m3u8dl": [
+    "darwin/arm64/n_m3u8dl/N_m3u8DL-RE"
+  ],
+  "linux_x64_n_m3u8dl": [
+    "linux/x64/n_m3u8dl/N_m3u8DL-RE"
+  ],
+  "linux_arm64_n_m3u8dl": [
+    "linux/arm64/n_m3u8dl/N_m3u8DL-RE"
+  ],
   "windows_x64_megatools": [
     "windows/x64/megatools/megatools.exe"
   ],

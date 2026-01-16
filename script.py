@@ -15,6 +15,8 @@ BENTO4_VERSION = "1-6-0-641"
 N_M3U8DL_URL = "https://github.com/nilaoda/N_m3u8DL-RE/releases/download/v0.5.1-beta"
 N_M3U8DL_VERSION = "v0.5.1-beta"
 N_M3U8DL_DATE = "20251029"
+SHAKA_PACKAGER_URL = "https://github.com/shaka-project/shaka-packager/releases/download/v3.4.2"
+SHAKA_PACKAGER_VERSION = "v3.4.2"
 
 
 class BinaryDownloader:
@@ -41,6 +43,7 @@ class BinaryDownloader:
                 (self.base_path / platform_name / arch / "bento4").mkdir(parents=True, exist_ok=True)
                 (self.base_path / platform_name / arch / "megatools").mkdir(parents=True, exist_ok=True)
                 (self.base_path / platform_name / arch / "n_m3u8dl").mkdir(parents=True, exist_ok=True)
+                (self.base_path / platform_name / arch / "shaka_packager").mkdir(parents=True, exist_ok=True)
 
     def _download(self, url: str, dest: Path) -> bool:
         try:
@@ -326,6 +329,59 @@ class BinaryDownloader:
                     else:
                         print("skip")
 
+    def download_shaka_packager(self):
+        print("\n=== Shaka Packager ===")
+        
+        # Mappa le piattaforme/arch alle stringhe del release
+        shaka_map = {
+            'windows': {
+                'x64': 'win-x64',
+            },
+            'darwin': {
+                'x64': 'osx-x64',
+                'arm64': 'osx-arm64'
+            },
+            'linux': {
+                'x64': 'linux-x64',
+                'arm64': 'linux-arm64'
+            }
+        }
+        
+        for platform_name, arches in self.platforms.items():
+            for arch in arches:
+                print(f"{platform_name}-{arch}: ", end="", flush=True)
+                
+                platform_str = shaka_map.get(platform_name, {}).get(arch)
+                
+                if platform_str:
+                    target_dir = self.base_path / platform_name / arch / "shaka_packager"
+                    ext = ".exe" if platform_name == "windows" else ""
+                    success = 0
+                    
+                    # Download dei due binari: packager e mpd_generator
+                    for binary_base in ['packager', 'mpd_generator']:
+                        filename = f"{binary_base}-{platform_str}{ext}"
+                        url = f"{SHAKA_PACKAGER_URL}/{filename}"
+                        final_path = target_dir / f"{binary_base}{ext}"
+                        
+                        if self._download(url, final_path):
+                            if platform_name != "windows":
+                                os.chmod(final_path, 0o755)
+                            
+                            self._add_path(platform_name, arch, "shaka_packager", f"{binary_base}{ext}")
+                            success += 1
+                    
+                    print(f"{success}/2")
+                else:
+                    # Per architetture non supportate direttamente
+                    if platform_name == 'windows' and arch in ['x86', 'arm64']:
+                        copied = self._copy_binary('windows', 'x64', arch, 'shaka_packager')
+                        print(f"copied from x64: {copied}/2")
+                    elif platform_name == 'linux' and arch in ['ia32', 'arm']:
+                        print("not available")
+                    else:
+                        print("skip")
+
     def create_megatools_structure(self):
         print("\n=== Megatools (manual) ===")
         
@@ -354,6 +410,7 @@ class BinaryDownloader:
         self.download_ffmpeg()
         self.download_bento4()
         self.download_n_m3u8dl()
+        self.download_shaka_packager()
         self.create_megatools_structure()
         self.save_paths_json()
 

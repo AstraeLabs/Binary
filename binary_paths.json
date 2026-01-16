@@ -110,6 +110,34 @@
   "linux_arm64_n_m3u8dl": [
     "linux/arm64/n_m3u8dl/N_m3u8DL-RE"
   ],
+  "windows_x64_shaka_packager": [
+    "windows/x64/shaka_packager/packager.exe",
+    "windows/x64/shaka_packager/mpd_generator.exe"
+  ],
+  "windows_x86_shaka_packager": [
+    "windows/x86/shaka_packager/mpd_generator.exe",
+    "windows/x86/shaka_packager/packager.exe"
+  ],
+  "windows_arm64_shaka_packager": [
+    "windows/arm64/shaka_packager/mpd_generator.exe",
+    "windows/arm64/shaka_packager/packager.exe"
+  ],
+  "darwin_x64_shaka_packager": [
+    "darwin/x64/shaka_packager/packager",
+    "darwin/x64/shaka_packager/mpd_generator"
+  ],
+  "darwin_arm64_shaka_packager": [
+    "darwin/arm64/shaka_packager/packager",
+    "darwin/arm64/shaka_packager/mpd_generator"
+  ],
+  "linux_x64_shaka_packager": [
+    "linux/x64/shaka_packager/packager",
+    "linux/x64/shaka_packager/mpd_generator"
+  ],
+  "linux_arm64_shaka_packager": [
+    "linux/arm64/shaka_packager/packager",
+    "linux/arm64/shaka_packager/mpd_generator"
+  ],
   "windows_x64_megatools": [
     "windows/x64/megatools/megatools.exe"
   ],

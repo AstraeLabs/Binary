@@ -11,83 +11,37 @@
     "windows/arm64/ffmpeg/ffmpeg.exe",
     "windows/arm64/ffmpeg/ffprobe.exe"
   ],
-  "darwin_x64_ffmpeg": [
-    "darwin/x64/ffmpeg/ffmpeg",
-    "darwin/x64/ffmpeg/ffprobe"
-  ],
-  "darwin_arm64_ffmpeg": [
-    "darwin/arm64/ffmpeg/ffmpeg",
-    "darwin/arm64/ffmpeg/ffprobe"
-  ],
-  "linux_x64_ffmpeg": [
-    "linux/x64/ffmpeg/ffmpeg",
-    "linux/x64/ffmpeg/ffprobe"
-  ],
-  "linux_ia32_ffmpeg": [
-    "linux/ia32/ffmpeg/ffmpeg",
-    "linux/ia32/ffmpeg/ffprobe"
-  ],
-  "linux_arm_ffmpeg": [
-    "linux/arm/ffmpeg/ffmpeg",
-    "linux/arm/ffmpeg/ffprobe"
-  ],
-  "linux_arm64_ffmpeg": [
-    "linux/arm64/ffmpeg/ffmpeg",
-    "linux/arm64/ffmpeg/ffprobe"
-  ],
   "windows_x64_bento4": [
     "windows/x64/bento4/mp4dump.exe",
-    "windows/x64/bento4/mp4info.exe",
-    "windows/x64/bento4/mp4decrypt.exe",
-    "windows/x64/bento4/mp4encrypt.exe"
+    "windows/x64/bento4/mp4decrypt.exe"
   ],
   "windows_x86_bento4": [
     "windows/x86/bento4/mp4decrypt.exe",
-    "windows/x86/bento4/mp4dump.exe",
-    "windows/x86/bento4/mp4encrypt.exe",
-    "windows/x86/bento4/mp4info.exe"
+    "windows/x86/bento4/mp4dump.exe"
   ],
   "windows_arm64_bento4": [
     "windows/arm64/bento4/mp4decrypt.exe",
-    "windows/arm64/bento4/mp4dump.exe",
-    "windows/arm64/bento4/mp4encrypt.exe",
-    "windows/arm64/bento4/mp4info.exe"
+    "windows/arm64/bento4/mp4dump.exe"
   ],
   "darwin_x64_bento4": [
-    "darwin/x64/bento4/mp4encrypt",
     "darwin/x64/bento4/mp4decrypt",
-    "darwin/x64/bento4/mp4info",
     "darwin/x64/bento4/mp4dump"
   ],
   "darwin_arm64_bento4": [
-    "darwin/arm64/bento4/mp4encrypt",
     "darwin/arm64/bento4/mp4decrypt",
-    "darwin/arm64/bento4/mp4info",
     "darwin/arm64/bento4/mp4dump"
   ],
   "linux_x64_bento4": [
     "linux/x64/bento4/mp4decrypt",
-    "linux/x64/bento4/mp4dump",
-    "linux/x64/bento4/mp4encrypt",
-    "linux/x64/bento4/mp4info"
-  ],
-  "linux_ia32_bento4": [
-    "linux/ia32/bento4/mp4decrypt",
-    "linux/ia32/bento4/mp4dump",
-    "linux/ia32/bento4/mp4encrypt",
-    "linux/ia32/bento4/mp4info"
+    "linux/x64/bento4/mp4dump"
   ],
   "linux_arm_bento4": [
     "linux/arm/bento4/mp4decrypt",
-    "linux/arm/bento4/mp4dump",
-    "linux/arm/bento4/mp4encrypt",
-    "linux/arm/bento4/mp4info"
+    "linux/arm/bento4/mp4dump"
   ],
   "linux_arm64_bento4": [
     "linux/arm64/bento4/mp4decrypt",
-    "linux/arm64/bento4/mp4dump",
-    "linux/arm64/bento4/mp4encrypt",
-    "linux/arm64/bento4/mp4info"
+    "linux/arm64/bento4/mp4dump"
   ],
   "windows_x64_n_m3u8dl": [
     "windows/x64/n_m3u8dl/N_m3u8DL-RE.exe"
@@ -138,6 +92,36 @@
     "linux/arm64/shaka_packager/packager",
     "linux/arm64/shaka_packager/mpd_generator"
   ],
+  "windows_x64_dovi_tool": [
+    "windows/x64/dovi_tool/dovi_tool.exe"
+  ],
+  "windows_arm64_dovi_tool": [
+    "windows/arm64/dovi_tool/dovi_tool.exe"
+  ],
+  "darwin_x64_dovi_tool": [
+    "darwin/x64/dovi_tool/dovi_tool"
+  ],
+  "darwin_arm64_dovi_tool": [
+    "darwin/arm64/dovi_tool/dovi_tool"
+  ],
+  "linux_x64_dovi_tool": [
+    "linux/x64/dovi_tool/dovi_tool"
+  ],
+  "linux_arm64_dovi_tool": [
+    "linux/arm64/dovi_tool/dovi_tool"
+  ],
+  "windows_x64_mkvtoolnix": [
+    "windows/x64/mkvtoolnix/mkvmerge.exe",
+    "windows/x64/mkvtoolnix/mkvinfo.exe"
+  ],
+  "windows_x86_mkvtoolnix": [
+    "windows/x86/mkvtoolnix/mkvmerge.exe",
+    "windows/x86/mkvtoolnix/mkvinfo.exe"
+  ],
+  "windows_arm64_mkvtoolnix": [
+    "windows/arm64/mkvtoolnix/mkvinfo.exe",
+    "windows/arm64/mkvtoolnix/mkvmerge.exe"
+  ],
   "windows_x64_megatools": [
     "windows/x64/megatools/megatools.exe"
   ],
@@ -155,9 +139,6 @@
   ],
   "linux_x64_megatools": [
     "linux/x64/megatools/megatools"
-  ],
-  "linux_ia32_megatools": [
-    "linux/ia32/megatools/megatools"
   ],
   "linux_arm_megatools": [
     "linux/arm/megatools/megatools"

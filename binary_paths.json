@@ -35,10 +35,6 @@
     "linux/x64/bento4/mp4decrypt",
     "linux/x64/bento4/mp4dump"
   ],
-  "linux_arm_bento4": [
-    "linux/arm/bento4/mp4decrypt",
-    "linux/arm/bento4/mp4dump"
-  ],
   "linux_arm64_bento4": [
     "linux/arm64/bento4/mp4decrypt",
     "linux/arm64/bento4/mp4dump"
@@ -140,10 +136,28 @@
   "linux_x64_megatools": [
     "linux/x64/megatools/megatools"
   ],
-  "linux_arm_megatools": [
-    "linux/arm/megatools/megatools"
-  ],
   "linux_arm64_megatools": [
     "linux/arm64/megatools/megatools"
+  ],
+  "windows_x64_velora": [
+    "windows/x64/velora/velora.exe"
+  ],
+  "windows_arm64_velora": [
+    "windows/arm64/velora/velora.exe"
+  ],
+  "darwin_x64_velora": [
+    "darwin/x64/velora/velora"
+  ],
+  "darwin_arm64_velora": [
+    "darwin/arm64/velora/velora"
+  ],
+  "linux_x64_velora": [
+    "linux/x64/velora/velora"
+  ],
+  "linux_x64_velora_musl": [
+    "linux/x64/velora_musl/velora"
+  ],
+  "linux_arm64_velora": [
+    "linux/arm64/velora/velora"
   ]
 }

@@ -34,7 +34,7 @@ class BinaryDownloader:
         self.platforms = {
             'windows': ['x64', 'x86', 'arm64'],
             'darwin': ['x64', 'arm64'],
-            'linux': ['x64', 'arm', 'arm64']
+            'linux': ['x64', 'arm64']
         }
 
         self._create_directories()
@@ -497,8 +497,6 @@ class BinaryDownloader:
                     archive_path.unlink(missing_ok=True)
 
                 print(f"{success}/{len(binaries)}")
-
-
 
     def create_megatools_structure(self):
         print("\n=== Megatools (manual) ===")

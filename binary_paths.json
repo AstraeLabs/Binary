@@ -39,54 +39,26 @@
     "linux/arm64/bento4/mp4decrypt",
     "linux/arm64/bento4/mp4dump"
   ],
-  "windows_x64_n_m3u8dl": [
-    "windows/x64/n_m3u8dl/N_m3u8DL-RE.exe"
-  ],
-  "windows_x86_n_m3u8dl": [
-    "windows/x86/n_m3u8dl/N_m3u8DL-RE.exe"
-  ],
-  "windows_arm64_n_m3u8dl": [
-    "windows/arm64/n_m3u8dl/N_m3u8DL-RE.exe"
-  ],
-  "darwin_x64_n_m3u8dl": [
-    "darwin/x64/n_m3u8dl/N_m3u8DL-RE"
-  ],
-  "darwin_arm64_n_m3u8dl": [
-    "darwin/arm64/n_m3u8dl/N_m3u8DL-RE"
-  ],
-  "linux_x64_n_m3u8dl": [
-    "linux/x64/n_m3u8dl/N_m3u8DL-RE"
-  ],
-  "linux_arm64_n_m3u8dl": [
-    "linux/arm64/n_m3u8dl/N_m3u8DL-RE"
-  ],
   "windows_x64_shaka_packager": [
-    "windows/x64/shaka_packager/packager.exe",
-    "windows/x64/shaka_packager/mpd_generator.exe"
+    "windows/x64/shaka_packager/packager.exe"
   ],
   "windows_x86_shaka_packager": [
-    "windows/x86/shaka_packager/mpd_generator.exe",
     "windows/x86/shaka_packager/packager.exe"
   ],
   "windows_arm64_shaka_packager": [
-    "windows/arm64/shaka_packager/mpd_generator.exe",
     "windows/arm64/shaka_packager/packager.exe"
   ],
   "darwin_x64_shaka_packager": [
-    "darwin/x64/shaka_packager/packager",
-    "darwin/x64/shaka_packager/mpd_generator"
+    "darwin/x64/shaka_packager/packager"
   ],
   "darwin_arm64_shaka_packager": [
-    "darwin/arm64/shaka_packager/packager",
-    "darwin/arm64/shaka_packager/mpd_generator"
+    "darwin/arm64/shaka_packager/packager"
   ],
   "linux_x64_shaka_packager": [
-    "linux/x64/shaka_packager/packager",
-    "linux/x64/shaka_packager/mpd_generator"
+    "linux/x64/shaka_packager/packager"
   ],
   "linux_arm64_shaka_packager": [
-    "linux/arm64/shaka_packager/packager",
-    "linux/arm64/shaka_packager/mpd_generator"
+    "linux/arm64/shaka_packager/packager"
   ],
   "windows_x64_dovi_tool": [
     "windows/x64/dovi_tool/dovi_tool.exe"

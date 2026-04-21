@@ -1,0 +1,98 @@
+name: Update Velora binaries
+ 
+on:
+  workflow_dispatch:
+ 
+permissions:
+  contents: write
+ 
+concurrency:
+  group: update-velora-binaries
+  cancel-in-progress: false
+ 
+env:
+  VELORA_REPO: AstraeLabs/Velora
+  VELORA_TAG: init
+ 
+jobs:
+  update:
+    name: Pull & commit latest Velora binaries
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+ 
+      - name: Download Velora release assets
+        env:
+          GH_TOKEN: ${{ secrets.VELORA_RELEASES_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p .velora-dl
+ 
+          gh release download "$VELORA_TAG" \
+            --repo "$VELORA_REPO" \
+            --dir  .velora-dl \
+            --pattern 'velora-win-x64.exe' \
+            --pattern 'velora-win-arm64.exe' \
+            --pattern 'velora-osx-x64' \
+            --pattern 'velora-osx-arm64' \
+            --pattern 'velora-linux-x64' \
+            --pattern 'velora-linux-arm64' \
+            --pattern 'velora-linux-musl-x64' \
+            --clobber
+ 
+          echo "── Downloaded ──"
+          ls -lh .velora-dl/
+ 
+      - name: Place binaries in the correct folders
+        run: |
+          set -euo pipefail
+ 
+          # asset_name → destination inside binaries/
+          declare -A MAP=(
+            ["velora-win-x64.exe"]="binaries/windows/x64/velora/velora.exe"
+            ["velora-win-arm64.exe"]="binaries/windows/arm64/velora/velora.exe"
+            ["velora-osx-x64"]="binaries/darwin/x64/velora/velora"
+            ["velora-osx-arm64"]="binaries/darwin/arm64/velora/velora"
+            ["velora-linux-x64"]="binaries/linux/x64/velora/velora"
+            ["velora-linux-arm64"]="binaries/linux/arm64/velora/velora"
+            ["velora-linux-musl-x64"]="binaries/linux/x64/velora_musl/velora"
+          )
+ 
+          for asset in "${!MAP[@]}"; do
+            dst="${MAP[$asset]}"
+            src=".velora-dl/${asset}"
+ 
+            if [ ! -f "$src" ]; then
+              echo "::error::Missing asset $asset in release $VELORA_TAG"
+              exit 1
+            fi
+ 
+            mkdir -p "$(dirname "$dst")"
+            install -m 755 "$src" "$dst"
+            echo "  $asset → $dst"
+          done
+ 
+          rm -rf .velora-dl
+ 
+          echo "── Placed ──"
+          find binaries -type d -name 'velora*' -exec ls -lh {} +
+ 
+      - name: Commit & push
+        run: |
+          set -euo pipefail
+ 
+          if [ -z "$(git status --porcelain binaries)" ]; then
+            echo "No changes — binaries already up to date."
+            exit 0
+          fi
+ 
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+ 
+          git add binaries
+          git commit -m "chore(velora): sync binaries from ${VELORA_REPO}@${VELORA_TAG}
+ 
+          Triggered by @${{ github.actor }} via workflow_dispatch."
+          git push

@@ -92,6 +92,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -155,7 +157,8 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add binaries binary_paths.json
+          git lfs install
+          git add .gitattributes binaries binary_paths.json
 
           msg="chore(binaries): weekly update"
           [ "${{ needs.check.outputs.ffmpeg_changed }}" = "true" ] && msg="${msg}

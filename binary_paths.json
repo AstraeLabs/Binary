@@ -110,5 +110,13 @@
   ],
   "linux_arm64_velora": [
     "linux/arm64/velora/velora"
+  ],
+  "linux_x64_ffmpeg": [
+    "linux/x64/ffmpeg/ffmpeg",
+    "linux/x64/ffmpeg/ffprobe"
+  ],
+  "linux_arm64_ffmpeg": [
+    "linux/arm64/ffmpeg/ffmpeg",
+    "linux/arm64/ffmpeg/ffprobe"
   ]
 }

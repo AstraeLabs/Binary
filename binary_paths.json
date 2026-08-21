@@ -118,5 +118,26 @@
   "linux_arm64_ffmpeg": [
     "linux/arm64/ffmpeg/ffmpeg",
     "linux/arm64/ffmpeg/ffprobe"
+  ],
+  "windows_x64_flux": [
+    "windows/x64/flux/flux.exe"
+  ],
+  "windows_arm64_flux": [
+    "windows/arm64/flux/flux.exe"
+  ],
+  "darwin_x64_flux": [
+    "darwin/x64/flux/flux"
+  ],
+  "darwin_arm64_flux": [
+    "darwin/arm64/flux/flux"
+  ],
+  "linux_x64_flux": [
+    "linux/x64/flux/flux"
+  ],
+  "linux_arm64_flux": [
+    "linux/arm64/flux/flux"
+  ],
+  "linux_x64_flux_musl": [
+    "linux/x64/flux_musl/flux"
   ]
 }

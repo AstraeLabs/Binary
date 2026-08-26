@@ -26,6 +26,8 @@ ASSET_MAP: Dict[str, Tuple[str, str, str, str]] = {
     "velora-linux-x64":        ("linux",   "x64",   "velora",       "velora"),
     "velora-linux-arm64":      ("linux",   "arm64", "velora",       "velora"),
     "velora-linux-musl-x64":   ("linux",   "x64",   "velora_musl",  "velora"),
+    "velora-termux-arm64":     ("linux",   "arm64", "velora_termux", "velora"),
+    "velora-termux-arm":       ("linux",   "arm",   "velora_termux", "velora"),
 }
 
 

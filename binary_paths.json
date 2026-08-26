@@ -111,6 +111,12 @@
   "linux_arm64_velora": [
     "linux/arm64/velora/velora"
   ],
+  "linux_arm64_velora_termux": [
+    "linux/arm64/velora_termux/velora"
+  ],
+  "linux_arm_velora_termux": [
+    "linux/arm/velora_termux/velora"
+  ],
   "linux_x64_ffmpeg": [
     "linux/x64/ffmpeg/ffmpeg",
     "linux/x64/ffmpeg/ffprobe"
@@ -139,5 +145,11 @@
   ],
   "linux_x64_flux_musl": [
     "linux/x64/flux_musl/flux"
+  ],
+  "linux_arm64_flux_termux": [
+    "linux/arm64/flux_termux/flux"
+  ],
+  "linux_arm_flux_termux": [
+    "linux/arm/flux_termux/flux"
   ]
 }

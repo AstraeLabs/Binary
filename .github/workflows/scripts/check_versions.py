@@ -124,6 +124,26 @@ def latest_velora() -> str:
     return m.group(1)
 
 
+def latest_yt_dlp() -> str:
+    """Latest yt-dlp release tag from GitHub."""
+    r = session.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=30)
+    r.raise_for_status()
+    tag = r.json().get("tag_name", "")
+    if not tag:
+        raise RuntimeError("No tag found for yt-dlp/yt-dlp")
+    return tag
+
+
+def latest_deno() -> str:
+    """Latest deno release tag from GitHub."""
+    r = session.get("https://api.github.com/repos/denoland/deno/releases/latest", timeout=30)
+    r.raise_for_status()
+    tag = r.json().get("tag_name", "")
+    if not tag:
+        raise RuntimeError("No tag found for denoland/deno")
+    return tag
+
+
 def main():
     checks = {
         "ffmpeg": latest_ffmpeg,
@@ -132,6 +152,8 @@ def main():
         "dovi_tool": latest_dovi_tool,
         "mkvtoolnix": latest_mkvtoolnix,
         "velora": latest_velora,
+        "yt-dlp": latest_yt_dlp,
+        "deno": latest_deno,
     }
 
     gh_output = os.environ.get("GITHUB_OUTPUT")

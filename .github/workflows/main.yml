@@ -1,4 +1,4 @@
-name: Update FFmpeg / Bento4 / Shaka Packager / dovi_tool / MKVToolNix / Velora binaries
+name: Update FFmpeg / Bento4 / Shaka Packager / dovi_tool / MKVToolNix / Velora / yt-dlp / deno binaries
 
 on:
   schedule:
@@ -19,6 +19,8 @@ on:
           - dovi_tool
           - mkvtoolnix
           - velora
+          - yt-dlp
+          - deno
       force:
         description: 'Force the download even if the version has not changed'
         type: boolean
@@ -49,6 +51,10 @@ jobs:
       mkvtoolnix_latest: ${{ steps.check.outputs.mkvtoolnix_latest }}
       velora_changed: ${{ steps.check.outputs.velora_changed }}
       velora_latest: ${{ steps.check.outputs.velora_latest }}
+      yt_dlp_changed: ${{ steps.check.outputs.yt_dlp_changed }}
+      yt_dlp_latest: ${{ steps.check.outputs.yt_dlp_latest }}
+      deno_changed: ${{ steps.check.outputs.deno_changed }}
+      deno_latest: ${{ steps.check.outputs.deno_latest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,6 +86,8 @@ jobs:
           echo "| dovi_tool | ${{ steps.check.outputs.dovi_tool_changed }} | ${{ steps.check.outputs.dovi_tool_latest }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| MKVToolNix | ${{ steps.check.outputs.mkvtoolnix_changed }} | ${{ steps.check.outputs.mkvtoolnix_latest }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Velora | ${{ steps.check.outputs.velora_changed }} | ${{ steps.check.outputs.velora_latest }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| yt-dlp | ${{ steps.check.outputs.yt_dlp_changed }} | ${{ steps.check.outputs.yt_dlp_latest }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| deno | ${{ steps.check.outputs.deno_changed }} | ${{ steps.check.outputs.deno_latest }} |" >> "$GITHUB_STEP_SUMMARY"
 
   update:
     name: Download and publish updated binaries
@@ -115,6 +123,8 @@ jobs:
           DOVI_TOOL_CHANGED: ${{ needs.check.outputs.dovi_tool_changed }}
           MKVTOOLNIX_CHANGED: ${{ needs.check.outputs.mkvtoolnix_changed }}
           VELORA_CHANGED: ${{ needs.check.outputs.velora_changed }}
+          YT_DLP_CHANGED: ${{ needs.check.outputs.yt_dlp_changed }}
+          DENO_CHANGED: ${{ needs.check.outputs.deno_changed }}
         run: |
           # A specific tool picked from the workflow_dispatch dropdown always
           # wins (this is the manual "update Velora" button use case).
@@ -123,7 +133,8 @@ jobs:
           else
             only=""
             for pair in "ffmpeg:$FFMPEG_CHANGED" "bento4:$BENTO4_CHANGED" "shaka:$SHAKA_CHANGED" \
-                        "dovi_tool:$DOVI_TOOL_CHANGED" "mkvtoolnix:$MKVTOOLNIX_CHANGED" "velora:$VELORA_CHANGED"; do
+                        "dovi_tool:$DOVI_TOOL_CHANGED" "mkvtoolnix:$MKVTOOLNIX_CHANGED" "velora:$VELORA_CHANGED" \
+                        "yt-dlp:$YT_DLP_CHANGED" "deno:$DENO_CHANGED"; do
               name="${pair%%:*}"
               changed="${pair##*:}"
               if [ "$changed" = "true" ] || [ "$FORCE_INPUT" = "true" ]; then
@@ -174,6 +185,10 @@ jobs:
           - MKVToolNix -> ${{ needs.check.outputs.mkvtoolnix_latest }}"
           [ "${{ needs.check.outputs.velora_changed }}" = "true" ] && msg="${msg}
           - Velora -> ${{ needs.check.outputs.velora_latest }}"
+          [ "${{ needs.check.outputs.yt_dlp_changed }}" = "true" ] && msg="${msg}
+          - yt-dlp -> ${{ needs.check.outputs.yt_dlp_latest }}"
+          [ "${{ needs.check.outputs.deno_changed }}" = "true" ] && msg="${msg}
+          - deno -> ${{ needs.check.outputs.deno_latest }}"
 
           git commit -m "$msg"
           git push

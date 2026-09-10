@@ -26,6 +26,9 @@ SHAKA_PACKAGER_URL_BASE = "https://github.com/shaka-project/shaka-packager/relea
 DOVI_TOOL_URL_BASE = "https://github.com/quietvoid/dovi_tool/releases/download"
 MKVTOOLNIX_URL = f"https://mkvtoolnix.download/windows/releases/{MKVTOOLNIX_VERSION}"
 
+YT_DLP_URL_BASE = "https://github.com/yt-dlp/yt-dlp/releases/latest/download"
+DENO_URL_BASE = "https://github.com/denoland/deno/releases/latest/download"
+
 VELORA_OWNER = "AstraeLabs"
 VELORA_REPO = "Velora"
 VELORA_TAG = "init"
@@ -75,6 +78,8 @@ class BinaryDownloader:
                     (self.base_path / platform_name / arch / "ffmpeg").mkdir(parents=True, exist_ok=True)
                 (self.base_path / platform_name / arch / "bento4").mkdir(parents=True, exist_ok=True)
                 (self.base_path / platform_name / arch / "shaka_packager").mkdir(parents=True, exist_ok=True)
+                (self.base_path / platform_name / arch / "yt-dlp").mkdir(parents=True, exist_ok=True)
+                (self.base_path / platform_name / arch / "deno").mkdir(parents=True, exist_ok=True)
 
     def _download(
         self,
@@ -580,6 +585,113 @@ class BinaryDownloader:
 
         self._write_version_file("velora", VELORA_VERSION or "unknown")
 
+    def download_yt_dlp(self):
+        print(f"\n=== yt-dlp ===")
+
+        bin_map = {
+            'windows': 'yt-dlp.exe',
+            'darwin': 'yt-dlp',
+            'linux': 'yt-dlp',
+        }
+
+        any_success = False
+        for platform_name, arches in self.platforms.items():
+            for arch in arches:
+                print(f"{platform_name}-{arch}: ", end="", flush=True)
+
+                filename = bin_map.get(platform_name)
+                if not filename:
+                    print("skip")
+                    continue
+
+                target_dir = self.base_path / platform_name / arch / "yt-dlp"
+                target_dir.mkdir(parents=True, exist_ok=True)
+                url = f"{YT_DLP_URL_BASE}/{filename}"
+                dest = target_dir / filename
+
+                if self._download(url, dest):
+                    if platform_name != "windows":
+                        os.chmod(dest, 0o755)
+                    self._add_path(platform_name, arch, "yt-dlp", filename)
+                    print("OK")
+                    any_success = True
+                else:
+                    print("fail")
+
+        if any_success:
+            self._write_version_file("yt-dlp", "latest")
+
+    def download_deno(self):
+        print(f"\n=== deno ===")
+
+        deno_map = {
+            'windows': {
+                'x64': 'deno-x86_64-pc-windows-msvc.zip',
+                'arm64': 'deno-aarch64-pc-windows-msvc.zip',
+            },
+            'darwin': {
+                'x64': 'deno-x86_64-apple-darwin.zip',
+                'arm64': 'deno-aarch64-apple-darwin.zip',
+            },
+            'linux': {
+                'x64': 'deno-x86_64-unknown-linux-gnu.zip',
+                'arm64': 'deno-aarch64-unknown-linux-gnu.zip',
+            }
+        }
+
+        any_success = False
+        for platform_name, arches in self.platforms.items():
+            for arch in arches:
+                print(f"{platform_name}-{arch}: ", end="", flush=True)
+
+                archive_name = deno_map.get(platform_name, {}).get(arch)
+                if not archive_name:
+                    if platform_name == 'windows' and arch == 'x86':
+                        copied = self._copy_binary('windows', 'x64', arch, 'deno')
+                        print(f"copied from x64: {copied}/1")
+                        any_success = any_success or copied > 0
+                    else:
+                        print("skip")
+                    continue
+
+                url = f"{DENO_URL_BASE}/{archive_name}"
+                target_dir = self.base_path / platform_name / arch / "deno"
+                target_dir.mkdir(parents=True, exist_ok=True)
+                archive_path = target_dir / archive_name
+
+                if not self._download(url, archive_path):
+                    print("0/1")
+                    continue
+
+                success = 0
+                try:
+                    bin_name = "deno.exe" if platform_name == "windows" else "deno"
+                    final_path = target_dir / bin_name
+
+                    with zipfile.ZipFile(archive_path, 'r') as zf:
+                        for info in zf.filelist:
+                            if info.filename.endswith(bin_name):
+                                data = zf.read(info.filename)
+                                with open(final_path, 'wb') as f:
+                                    f.write(data)
+                                break
+
+                    if final_path.exists():
+                        if platform_name != "windows":
+                            os.chmod(final_path, 0o755)
+                        self._add_path(platform_name, arch, "deno", bin_name)
+                        success = 1
+                        any_success = True
+
+                    archive_path.unlink()
+                except Exception as e:
+                    print(f"  X extract: {str(e)[:40]}")
+
+                print(f"{success}/1")
+
+        if any_success:
+            self._write_version_file("deno", "latest")
+
     def save_paths_json(self):
         json_path = Path("./binary_paths.json")
         existing = {}
@@ -605,6 +717,8 @@ class BinaryDownloader:
             "dovi_tool": self.download_dovi_tool,
             "mkvtoolnix": self.download_mkvtoolnix,
             "velora": self.download_velora,
+            "yt-dlp": self.download_yt_dlp,
+            "deno": self.download_deno,
         }
         selected = only or list(tools.keys())
         for name in selected:
@@ -618,7 +732,7 @@ class BinaryDownloader:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download/update third-party binaries.")
-    parser.add_argument("--only", help="Comma-separated list: ffmpeg,bento4,shaka,dovi_tool,mkvtoolnix,velora")
+    parser.add_argument("--only", help="Comma-separated list: ffmpeg,bento4,shaka,dovi_tool,mkvtoolnix,velora,yt-dlp,deno")
     args = parser.parse_args()
 
     only_list = [t.strip() for t in args.only.split(",")] if args.only else None

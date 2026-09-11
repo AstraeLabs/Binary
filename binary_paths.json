@@ -172,5 +172,26 @@
   ],
   "linux_arm64_deno": [
     "linux/arm64/deno/deno"
+  ],
+  "windows_x64_yt-dlp": [
+    "windows/x64/yt-dlp/yt-dlp.exe"
+  ],
+  "windows_x86_yt-dlp": [
+    "windows/x86/yt-dlp/yt-dlp.exe"
+  ],
+  "windows_arm64_yt-dlp": [
+    "windows/arm64/yt-dlp/yt-dlp.exe"
+  ],
+  "darwin_x64_yt-dlp": [
+    "darwin/x64/yt-dlp/yt-dlp"
+  ],
+  "darwin_arm64_yt-dlp": [
+    "darwin/arm64/yt-dlp/yt-dlp"
+  ],
+  "linux_x64_yt-dlp": [
+    "linux/x64/yt-dlp/yt-dlp"
+  ],
+  "linux_arm64_yt-dlp": [
+    "linux/arm64/yt-dlp/yt-dlp"
   ]
 }

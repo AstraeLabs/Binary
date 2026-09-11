@@ -19,6 +19,8 @@ SHAKA_PACKAGER_VERSION = os.environ.get("SHAKA_PACKAGER_VERSION", "v3.9.3")  # t
 DOVI_TOOL_VERSION = os.environ.get("DOVI_TOOL_VERSION", "2.3.3")
 MKVTOOLNIX_VERSION = os.environ.get("MKVTOOLNIX_VERSION", "100.0")
 VELORA_VERSION = os.environ.get("VELORA_VERSION", "")                  # Cargo.toml version on AstraeLabs/Velora@main
+YT_DLP_VERSION = os.environ.get("YT_DLP_VERSION", "")                  # release tag on yt-dlp/yt-dlp
+DENO_VERSION = os.environ.get("DENO_VERSION", "")                      # release tag on denoland/deno
 
 FFMPEG_URL_BASE = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
 BENTO4_URL = "https://www.bok.net/Bento4/binaries"
@@ -586,12 +588,18 @@ class BinaryDownloader:
         self._write_version_file("velora", VELORA_VERSION or "unknown")
 
     def download_yt_dlp(self):
-        print(f"\n=== yt-dlp ===")
+        print(f"\n=== yt-dlp ({YT_DLP_VERSION or 'latest'}) ===")
 
-        bin_map = {
-            'windows': 'yt-dlp.exe',
-            'darwin': 'yt-dlp',
-            'linux': 'yt-dlp',
+        # asset name on the yt-dlp release -> per (platform, arch); the darwin
+        # build is a universal binary shared by both arches. Using the same
+        # generic 'yt-dlp'/'yt-dlp.exe' asset for every arch would be wrong:
+        # that unsuffixed 'yt-dlp' asset is the Python-dependent zipimport
+        # build, not a standalone executable, and windows x86/arm64 need their
+        # own binaries (an x64 .exe won't run on 32-bit Windows at all).
+        yt_dlp_map = {
+            'windows': {'x64': 'yt-dlp.exe', 'x86': 'yt-dlp_x86.exe', 'arm64': 'yt-dlp_arm64.exe'},
+            'darwin': {'x64': 'yt-dlp_macos', 'arm64': 'yt-dlp_macos'},
+            'linux': {'x64': 'yt-dlp_linux', 'arm64': 'yt-dlp_linux_aarch64'},
         }
 
         any_success = False
@@ -599,30 +607,31 @@ class BinaryDownloader:
             for arch in arches:
                 print(f"{platform_name}-{arch}: ", end="", flush=True)
 
-                filename = bin_map.get(platform_name)
-                if not filename:
+                asset_name = yt_dlp_map.get(platform_name, {}).get(arch)
+                if not asset_name:
                     print("skip")
                     continue
 
+                bin_name = "yt-dlp.exe" if platform_name == "windows" else "yt-dlp"
                 target_dir = self.base_path / platform_name / arch / "yt-dlp"
                 target_dir.mkdir(parents=True, exist_ok=True)
-                url = f"{YT_DLP_URL_BASE}/{filename}"
-                dest = target_dir / filename
+                url = f"{YT_DLP_URL_BASE}/{asset_name}"
+                dest = target_dir / bin_name
 
                 if self._download(url, dest):
                     if platform_name != "windows":
                         os.chmod(dest, 0o755)
-                    self._add_path(platform_name, arch, "yt-dlp", filename)
+                    self._add_path(platform_name, arch, "yt-dlp", bin_name)
                     print("OK")
                     any_success = True
                 else:
                     print("fail")
 
         if any_success:
-            self._write_version_file("yt-dlp", "latest")
+            self._write_version_file("yt-dlp", YT_DLP_VERSION or "latest")
 
     def download_deno(self):
-        print(f"\n=== deno ===")
+        print(f"\n=== deno ({DENO_VERSION or 'latest'}) ===")
 
         deno_map = {
             'windows': {
@@ -690,7 +699,7 @@ class BinaryDownloader:
                 print(f"{success}/1")
 
         if any_success:
-            self._write_version_file("deno", "latest")
+            self._write_version_file("deno", DENO_VERSION or "latest")
 
     def save_paths_json(self):
         json_path = Path("./binary_paths.json")

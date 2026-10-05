@@ -464,7 +464,7 @@ class BinaryDownloader:
             'x64': f"mkvtoolnix-64-bit-{MKVTOOLNIX_VERSION}.zip",
             'x86': f"mkvtoolnix-32-bit-{MKVTOOLNIX_VERSION}.zip",
         }
-        binaries = ['mkvmerge.exe', 'mkvinfo.exe']
+        binaries = ['mkvmerge.exe', 'mkvinfo.exe', 'mkvpropedit.exe']
 
         any_success = False
         for platform_name, arches in self.platforms.items():

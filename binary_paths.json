@@ -80,15 +80,18 @@
   ],
   "windows_x64_mkvtoolnix": [
     "windows/x64/mkvtoolnix/mkvmerge.exe",
-    "windows/x64/mkvtoolnix/mkvinfo.exe"
+    "windows/x64/mkvtoolnix/mkvinfo.exe",
+    "windows/x64/mkvtoolnix/mkvpropedit.exe"
   ],
   "windows_x86_mkvtoolnix": [
     "windows/x86/mkvtoolnix/mkvmerge.exe",
-    "windows/x86/mkvtoolnix/mkvinfo.exe"
+    "windows/x86/mkvtoolnix/mkvinfo.exe",
+    "windows/x86/mkvtoolnix/mkvpropedit.exe"
   ],
   "windows_arm64_mkvtoolnix": [
     "windows/arm64/mkvtoolnix/mkvinfo.exe",
-    "windows/arm64/mkvtoolnix/mkvmerge.exe"
+    "windows/arm64/mkvtoolnix/mkvmerge.exe",
+    "windows/arm64/mkvtoolnix/mkvpropedit.exe"
   ],
   "windows_x64_velora": [
     "windows/x64/velora/velora.exe"

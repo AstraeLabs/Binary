@@ -16,6 +16,9 @@ BINARIES_DIR = Path(os.environ.get("GITHUB_WORKSPACE", ".")) / "binaries"
 VELORA_OWNER = "AstraeLabs"
 VELORA_REPO = "Velora"
 
+FLUX_OWNER = "AstraeLabs"
+FLUX_REPO = "Flux"
+
 session = requests.Session()
 session.headers.update({"User-Agent": "VibraVid-binary-updater"})
 if GITHUB_TOKEN:
@@ -124,6 +127,20 @@ def latest_velora() -> str:
     return m.group(1)
 
 
+def latest_flux() -> str:
+    """Canonical Flux version = the [package] version in flux/Cargo.toml on main."""
+    r = session.get(
+        f"https://api.github.com/repos/{FLUX_OWNER}/{FLUX_REPO}/contents/flux/Cargo.toml",
+        timeout=30,
+    )
+    r.raise_for_status()
+    content = base64.b64decode(r.json()["content"]).decode("utf-8")
+    m = re.search(r'^\s*version\s*=\s*"([^"]+)"', content, re.MULTILINE)
+    if not m:
+        raise RuntimeError(f"Could not parse the version from {FLUX_OWNER}/{FLUX_REPO} flux/Cargo.toml")
+    return m.group(1)
+
+
 def latest_yt_dlp() -> str:
     """Latest yt-dlp release tag from GitHub."""
     r = session.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=30)
@@ -152,6 +169,7 @@ def main():
         "dovi_tool": latest_dovi_tool,
         "mkvtoolnix": latest_mkvtoolnix,
         "velora": latest_velora,
+        "flux": latest_flux,
         "yt-dlp": latest_yt_dlp,
         "deno": latest_deno,
     }

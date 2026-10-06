@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import tarfile
@@ -50,6 +51,23 @@ VELORA_ASSET_MAP: Dict[str, Tuple[str, str, str, str]] = {
     "velora-linux-musl-x64": ("linux",   "x64",   "velora_musl", "velora"),
     "velora-termux-arm64":   ("linux",   "arm64", "velora_termux", "velora"),
     "velora-termux-arm":     ("linux",   "arm",   "velora_termux", "velora"),
+}
+
+FLUX_VERSION = os.environ.get("FLUX_VERSION", "")                      # Cargo.toml version on AstraeLabs/Flux@main
+FLUX_OWNER = "AstraeLabs"
+FLUX_REPO = "Flux"
+FLUX_TAG = "Init"
+# asset name (from Flux's release.yml) -> (platform, arch, tool dir, destination filename)
+FLUX_ASSET_MAP: Dict[str, Tuple[str, str, str, str]] = {
+    "flux-win-x64.exe":      ("windows", "x64",   "flux",       "flux.exe"),
+    "flux-win-arm64.exe":    ("windows", "arm64", "flux",       "flux.exe"),
+    "flux-osx-x64":          ("darwin",  "x64",   "flux",       "flux"),
+    "flux-osx-arm64":        ("darwin",  "arm64", "flux",       "flux"),
+    "flux-linux-x64":        ("linux",   "x64",   "flux",       "flux"),
+    "flux-linux-arm64":      ("linux",   "arm64", "flux",       "flux"),
+    "flux-linux-musl-x64":   ("linux",   "x64",   "flux_musl",  "flux"),
+    "flux-termux-arm64":     ("linux",   "arm64", "flux_termux", "flux"),
+    "flux-termux-arm":       ("linux",   "arm",   "flux_termux", "flux"),
 }
 
 SHAKA_PACKAGER_URL = f"{SHAKA_PACKAGER_URL_BASE}/{SHAKA_PACKAGER_VERSION}"
@@ -587,6 +605,69 @@ class BinaryDownloader:
 
         self._write_version_file("velora", VELORA_VERSION or "unknown")
 
+    def download_flux(self):
+        print(f"\n=== Flux ({FLUX_VERSION or 'unknown version'}) ===")
+
+        gh_session = requests.Session()
+        gh_session.headers.update({
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": f"{FLUX_OWNER}-Binary-updater",
+        })
+
+        url = f"https://api.github.com/repos/{FLUX_OWNER}/{FLUX_REPO}/releases/tags/{FLUX_TAG}"
+        r = gh_session.get(url, timeout=30)
+        if r.status_code == 404:
+            raise RuntimeError(f"Release '{FLUX_TAG}' not found on {FLUX_OWNER}/{FLUX_REPO}.")
+        r.raise_for_status()
+        assets = {a["name"]: a for a in r.json().get("assets", [])}
+
+        downloaded = []
+        for asset_name, (platform_name, arch, tool, filename) in FLUX_ASSET_MAP.items():
+            asset = assets.get(asset_name)
+            if not asset:
+                print(f"  X {asset_name}: missing in release '{FLUX_TAG}'")
+                continue
+
+            target_dir = self.base_path / platform_name / arch / tool
+            target_dir.mkdir(parents=True, exist_ok=True)
+            dest = target_dir / filename
+
+            if self._download(asset["url"], dest, session=gh_session, headers={"Accept": "application/octet-stream"}):
+                if platform_name != "windows":
+                    os.chmod(dest, 0o755)
+                self._add_path(platform_name, arch, tool, filename)
+                downloaded.append((platform_name, arch, tool, filename, dest))
+                print(f"  OK {asset_name} -> {dest.relative_to(self.base_path)}")
+
+        if not downloaded:
+            print("  X no Flux asset downloaded")
+            return
+
+        # Same guard as Velora, but `flux --version` prints plain text
+        # ("flux 0.5.0"), not JSON, so the version is matched with a regex.
+        if FLUX_VERSION:
+            linux_x64 = next(
+                (dest for (p, a, t, _name, dest) in downloaded if p == "linux" and a == "x64" and t == "flux"),
+                None,
+            )
+            if linux_x64 is not None:
+                try:
+                    out = subprocess.run([str(linux_x64), "--version"], capture_output=True, timeout=15, text=True)
+                    m = re.search(r"(\d+\.\d+\.\d+)", out.stdout + out.stderr)
+                    reported = m.group(1) if m else None
+                except Exception as e:
+                    reported = None
+                    print(f"  ! could not verify Flux version: {str(e)[:60]}")
+
+                if reported is not None and reported != FLUX_VERSION:
+                    raise RuntimeError(
+                        f"Flux release asset reports '{reported}' but flux/Cargo.toml is '{FLUX_VERSION}'. "
+                        "Refusing to publish a mismatched binary — the release build is likely still in flight."
+                    )
+
+        self._write_version_file("flux", FLUX_VERSION or "unknown")
+
     def download_yt_dlp(self):
         print(f"\n=== yt-dlp ({YT_DLP_VERSION or 'latest'}) ===")
 
@@ -726,6 +807,7 @@ class BinaryDownloader:
             "dovi_tool": self.download_dovi_tool,
             "mkvtoolnix": self.download_mkvtoolnix,
             "velora": self.download_velora,
+            "flux": self.download_flux,
             "yt-dlp": self.download_yt_dlp,
             "deno": self.download_deno,
         }
@@ -741,7 +823,7 @@ class BinaryDownloader:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download/update third-party binaries.")
-    parser.add_argument("--only", help="Comma-separated list: ffmpeg,bento4,shaka,dovi_tool,mkvtoolnix,velora,yt-dlp,deno")
+    parser.add_argument("--only", help="Comma-separated list: ffmpeg,bento4,shaka,dovi_tool,mkvtoolnix,velora,flux,yt-dlp,deno")
     args = parser.parse_args()
 
     only_list = [t.strip() for t in args.only.split(",")] if args.only else None

@@ -19,9 +19,9 @@ BENTO4_VERSION = os.environ.get("BENTO4_VERSION", "1-6-0-641")         # version
 SHAKA_PACKAGER_VERSION = os.environ.get("SHAKA_PACKAGER_VERSION", "v3.9.3")  # tag on shaka-project/shaka-packager
 DOVI_TOOL_VERSION = os.environ.get("DOVI_TOOL_VERSION", "2.3.4")
 MKVTOOLNIX_VERSION = os.environ.get("MKVTOOLNIX_VERSION", "100.0")
-VELORA_VERSION = os.environ.get("VELORA_VERSION", "")                  # Cargo.toml version on AstraeLabs/Velora@main
-YT_DLP_VERSION = os.environ.get("YT_DLP_VERSION", "")                  # release tag on yt-dlp/yt-dlp
-DENO_VERSION = os.environ.get("DENO_VERSION", "")                      # release tag on denoland/deno
+VELORA_VERSION = os.environ.get("VELORA_VERSION", "2.2.0")                  # Cargo.toml version on AstraeLabs/Velora@main
+YT_DLP_VERSION = os.environ.get("YT_DLP_VERSION", "2026.08.19")                  # release tag on yt-dlp/yt-dlp
+DENO_VERSION = os.environ.get("DENO_VERSION", "v2.9.7")                      # release tag on denoland/deno
 
 FFMPEG_URL_BASE = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
 BENTO4_URL = "https://www.bok.net/Bento4/binaries"
@@ -53,7 +53,7 @@ VELORA_ASSET_MAP: Dict[str, Tuple[str, str, str, str]] = {
     "velora-termux-arm":     ("linux",   "arm",   "velora_termux", "velora"),
 }
 
-FLUX_VERSION = os.environ.get("FLUX_VERSION", "")                      # Cargo.toml version on AstraeLabs/Flux@main
+FLUX_VERSION = os.environ.get("FLUX_VERSION", "0.5.1")                      # Cargo.toml version on AstraeLabs/Flux@main
 FLUX_OWNER = "AstraeLabs"
 FLUX_REPO = "Flux"
 FLUX_TAG = "Init"

@@ -248,8 +248,7 @@ class BinaryDownloader:
                     any_success = any_success or success > 0
                 else:
                     if platform_name == 'windows' and arch == 'x86':
-                        copied = self._copy_binary('windows', 'x64', arch, 'ffmpeg')
-                        print(f"copied from x64: {copied}/2")
+                        print("skip (no independently pinned x86 build)")
                     else:
                         print("skip (no upstream build)")
 
@@ -294,18 +293,9 @@ class BinaryDownloader:
     def download_bento4(self):
         print(f"\n=== Bento4 ({BENTO4_VERSION}) ===")
 
-        bento4_map = {
-            'windows': {
-                'x64': 'x86_64-microsoft-win32',
-            },
-            'darwin': {
-                'x64': 'universal-apple-macosx',
-                'arm64': 'universal-apple-macosx'
-            },
-            'linux': {
-                'x64': 'x86_64-unknown-linux',
-            }
-        }
+        # Only vendor archives with independently cross-checked SHA-256 pins
+        # can be published. Unpinned macOS/Linux packages are withheld.
+        bento4_map = {'windows': {'x64': 'x86_64-microsoft-win32'}}
 
         executables = {
             'windows': ['mp4decrypt.exe', 'mp4dump.exe'],
@@ -336,14 +326,9 @@ class BinaryDownloader:
                             for zip_info in zip_ref.filelist:
                                 for executable in executables[platform_name]:
                                     if zip_info.filename.endswith(executable):
-                                        temp_path = target_dir / "temp"
-                                        temp_path.mkdir(exist_ok=True)
-
-                                        zip_ref.extract(zip_info, temp_path)
-                                        src = temp_path / zip_info.filename
+                                        # Never materialize untrusted archive paths.
                                         dst = target_dir / executable
-
-                                        shutil.move(str(src), str(dst))
+                                        dst.write_bytes(zip_ref.read(zip_info))
 
                                         if platform_name != "windows":
                                             os.chmod(dst, 0o755)
@@ -361,14 +346,7 @@ class BinaryDownloader:
                     print(f"{success}/2")
                     any_success = any_success or success > 0
                 else:
-                    if platform_name == 'windows' and arch in ['x86', 'arm64']:
-                        copied = self._copy_binary('windows', 'x64', arch, 'bento4')
-                        print(f"copied from x64: {copied}/2")
-                    elif platform_name == 'linux' and arch in ['arm', 'arm64']:
-                        copied = self._copy_binary('linux', 'x64', arch, 'bento4')
-                        print(f"copied from x64: {copied}/2")
-                    else:
-                        print("skip")
+                    print("skip (not independently verified for this architecture)")
 
         if any_success:
             self._write_version_file("bento4", BENTO4_VERSION)
@@ -414,12 +392,11 @@ class BinaryDownloader:
                             self._add_path(platform_name, arch, "shaka_packager", f"{binary_base}{ext}")
                             success += 1
 
-                    print(f"{success}/2")
+                    print(f"{success}/1")
                     any_success = any_success or success > 0
                 else:
                     if platform_name == 'windows' and arch in ['x86', 'arm64']:
-                        copied = self._copy_binary('windows', 'x64', arch, 'shaka_packager')
-                        print(f"copied from x64: {copied}/2")
+                        print("skip (no native verified Windows build)")
                     elif platform_name == 'linux' and arch in ['arm']:
                         print("not available")
                     else:
@@ -532,10 +509,7 @@ class BinaryDownloader:
 
                 filename = mkvtoolnix_map.get(arch)
                 if not filename:
-                    dst_dir = self.base_path / platform_name / arch / "mkvtoolnix"
-                    dst_dir.mkdir(parents=True, exist_ok=True)
-                    copied = self._copy_binary('windows', 'x64', arch, 'mkvtoolnix')
-                    print(f"copied from x64: {copied}/{len(binaries)}")
+                    print("skip (no native verified Windows ARM64 package)")
                     continue
 
                 url = f"{MKVTOOLNIX_URL}/{filename}"
@@ -729,9 +703,7 @@ class BinaryDownloader:
                 archive_name = deno_map.get(platform_name, {}).get(arch)
                 if not archive_name:
                     if platform_name == 'windows' and arch == 'x86':
-                        copied = self._copy_binary('windows', 'x64', arch, 'deno')
-                        print(f"copied from x64: {copied}/1")
-                        any_success = any_success or copied > 0
+                        print("skip (no native verified x86 build)")
                     else:
                         print("skip")
                     continue

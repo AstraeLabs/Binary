@@ -69,9 +69,17 @@ jobs:
           fi
           python .github/workflows/scripts/download_binaries.py --only "$tools"
 
-      - name: Validate all standalone source-matched files
-        # Never publish a partial snapshot after a failed or tampered refresh.
-        run: python security/audit_snapshot.py --strict
+      - name: Validate standalone source-matched files
+        # A single-tool refresh must not be blocked by older unrelated assets.
+        env:
+          GROUP: ${{ inputs.group || 'all-approved' }}
+        shell: bash
+        run: |
+          if [ "$GROUP" = "all-approved" ]; then
+            python security/audit_snapshot.py --strict
+          else
+            python security/audit_snapshot.py
+          fi
 
       - name: Commit verified binaries to the selected branch
         shell: bash

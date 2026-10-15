@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
   refresh:
-    name: Download, verify, and commit reviewed binaries
+    name: Refresh only approved binaries after strict SHA-256 and format checks
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:

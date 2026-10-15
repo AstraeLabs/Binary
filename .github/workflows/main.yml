@@ -28,7 +28,7 @@ on:
         default: false
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: update-media-binaries
@@ -95,6 +95,8 @@ jobs:
 
   update:
     name: Download and publish updated binaries
+    permissions:
+      contents: write
     needs: check
     if: >-
       needs.check.outputs.any_changed == 'true' ||
@@ -106,7 +108,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
-          token: ${{ secrets.BINARY_PUSH_TOKEN }}
+          token: ${{ github.token }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -151,6 +153,9 @@ jobs:
           echo "Selected tools: $only"
           echo "only=$only" >> "$GITHUB_OUTPUT"
 
+      - name: Verify hash-lock policy before downloading
+        run: python -m unittest discover -s security -p "test_*.py" -v
+
       - name: Download updated binaries
         env:
           FFMPEG_VERSION: ${{ needs.check.outputs.ffmpeg_latest }}
@@ -164,6 +169,9 @@ jobs:
           YT_DLP_VERSION: ${{ needs.check.outputs.yt_dlp_latest }}
           DENO_VERSION: ${{ needs.check.outputs.deno_latest }}
         run: python .github/workflows/scripts/download_binaries.py --only "${{ steps.which.outputs.only }}"
+
+      - name: Report committed asset provenance
+        run: python security/audit_snapshot.py
 
       - name: Commit & push
         run: |

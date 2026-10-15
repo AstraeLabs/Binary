@@ -9,7 +9,7 @@ This fork deliberately treats every binary as untrusted until the *downloaded pa
 - Downloaded Velora/Flux executables are **never run** as part of source validation. Release version strings are not an integrity check.
 - Tests in `security/test_source_integrity.py` exercise expected success, changed payloads, missing pins, and HTTP rejection.
 - `security/audit_snapshot.py` independently hashes standalone executables already stored in this repository and checks them against pinned release assets. `--strict` fails if they differ.
-- The repository's scheduled updater also tests the policy before publishing.
+- The legacy scheduled updater was removed. Only the SHA-256-pinned refresh workflow publishes binaries. CI runs exhaustive source-byte comparisons on pull requests and the main branch.
 
 ## Updating binary files
 
@@ -17,7 +17,7 @@ After reviewing and merging this change, use **Actions > Refresh SHA-256-pinned 
 
 The initial one-off push workflow is restricted to the `security/verified-binary-sources-20261015` branch so the remediation branch can be verified before merging.
 
-**Bento4 Windows x64 and MKVToolNix Windows x64/x86 are now pinned.** Bento4 ZIP SHA-256 is cross-checked with the ScoopInstaller/Main manifest; MKVToolNix 100.0 ZIP SHA-256 values are from the publisher's sha256sums.txt. Unverifiable Bento4 macOS/Linux binaries and x64 copies mislabelled as other architectures have been removed. Their existing binaries are **not certified safe**. Do not refresh those products from an unverified URL. First obtain authentic vendor-provided checksums/signatures (or reproducibly build from audited source), add exact URL/hash pins in a reviewed commit, and then run the updater. The default automatic workflow may fail closed rather than silently accept an unauthenticated asset.
+**Bento4 Windows x64 and MKVToolNix Windows x64/x86 are now pinned.** Bento4 ZIP SHA-256 is cross-checked with the ScoopInstaller/Main manifest; MKVToolNix 100.0 ZIP SHA-256 values are from the publisher's sha256sums.txt. Unverifiable Bento4 macOS/Linux binaries and x64 copies mislabelled as other architectures have been removed. Their existing binaries are **not certified safe**. Do not refresh those products from an unverified URL. First obtain authentic vendor-provided checksums/signatures (or reproducibly build from audited source), add exact URL/hash pins in a reviewed commit, and then run the updater. Unsupported architectures are absent from binary_paths.json and cannot be published. Do not add them back without source authenticity evidence.
 
 To approve a new upstream release, review the vendor's announcement, signatures/checksums, source changes and provenance, replace the appropriate immutable SHA-256 pin(s), update version defaults or pinned source URLs, and let CI validate before merging. Avoid pinning movable `latest` URLs unless the expected SHA-256 remains locked.
 

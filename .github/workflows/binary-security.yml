@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          lfs: false
+          lfs: true
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -31,3 +31,6 @@ jobs:
         run: python -m unittest discover -s security -p "test_*.py" -v
       - name: Audit existing standalone release executables (report only)
         run: python security/audit_snapshot.py
+      - name: Verify all tracked executables from pinned upstream bytes
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+        run: python security/audit_all_binaries.py --enforce

@@ -1,0 +1,36 @@
+name: Verify binary supply-chain controls
+
+on:
+  push:
+    branches: [main, "security/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test requirements
+        run: python -m pip install requests
+      - name: Compile downloader and tests
+        run: |
+          python -m py_compile .github/workflows/scripts/download_binaries.py
+          python -m py_compile security/test_source_integrity.py
+      - name: Verify fail-closed source integrity
+        run: python -m unittest discover -s security -p "test_*.py" -v
+      - name: Audit existing standalone release executables (report only)
+        run: python security/audit_snapshot.py
+      - name: Verify all tracked executables from pinned upstream bytes
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+        run: python security/audit_all_binaries.py --enforce

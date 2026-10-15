@@ -1,9 +1,11 @@
 """Offline regression tests for fail-closed download integrity controls."""
 import hashlib
 import importlib.util
+import io
 import json
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "scripts" / "download_binaries.py"
@@ -77,6 +79,25 @@ class SourceIntegrityTests(unittest.TestCase):
         session = FakeSession(self.good_bytes)
         self.assertFalse(self.downloader._download(url, self.destination, session=session))
         self.assertEqual(session.calls, 0)
+
+    def test_bento4_verified_archive_is_cleaned_up(self):
+        buff = io.BytesIO()
+        with zipfile.ZipFile(buff, "w") as archive:
+            archive.writestr("Bento4/bin/mp4decrypt.exe", b"test-decrypt")
+            archive.writestr("Bento4/bin/mp4dump.exe", b"test-dump")
+        content = buff.getvalue()
+        source_url = (
+            f"{module.BENTO4_URL}/Bento4-SDK-{module.BENTO4_VERSION}."
+            "x86_64-microsoft-win32.zip"
+        )
+        self.downloader.trusted_sha256[source_url] = hashlib.sha256(content).hexdigest()
+        self.downloader.session = FakeSession(content)
+        self.downloader.download_bento4()
+        target_dir = Path(self.temp.name) / "windows" / "x64" / "bento4"
+        self.assertEqual((target_dir / "mp4decrypt.exe").read_bytes(), b"test-decrypt")
+        self.assertEqual((target_dir / "mp4dump.exe").read_bytes(), b"test-dump")
+        self.assertFalse((target_dir / "bento4.zip").exists())
+        self.assertFalse(self.downloader.failures)
 
     def test_lockfile_contains_valid_hashes_and_urls(self):
         lock_path = Path(__file__).with_name("trusted_source_hashes.json")

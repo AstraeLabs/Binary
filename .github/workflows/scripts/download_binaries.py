@@ -336,12 +336,11 @@ class BinaryDownloader:
                                         self._add_path(platform_name, arch, "bento4", executable)
                                         success += 1
 
-                                        if temp_path.exists():
-                                            shutil.rmtree(temp_path)
-
                         zip_path.unlink()
                     except Exception as e:
-                        print(f"  X extract: {str(e)[:40]}")
+                        zip_path.unlink(missing_ok=True)
+                        self.failures.append(f"Bento4 archive extraction failed: {e}")
+                        print(f"  X extract: {str(e)[:120]}")
 
                     print(f"{success}/2")
                     any_success = any_success or success > 0

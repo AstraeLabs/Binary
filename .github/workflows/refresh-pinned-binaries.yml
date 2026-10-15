@@ -11,6 +11,8 @@ on:
         options:
           - all-approved
           - ffmpeg
+          - bento4
+          - mkvtoolnix
           - shaka
           - dovi_tool
           - velora
@@ -60,10 +62,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$GROUP" = "all-approved" ]; then
-            tools="ffmpeg,shaka,dovi_tool,velora,flux,yt-dlp,deno"
+            tools="ffmpeg,bento4,shaka,dovi_tool,mkvtoolnix,velora,flux,yt-dlp,deno"
           else
             case "$GROUP" in
-              ffmpeg|shaka|dovi_tool|velora|flux|yt-dlp|deno) tools="$GROUP" ;;
+              ffmpeg|bento4|shaka|dovi_tool|mkvtoolnix|velora|flux|yt-dlp|deno) tools="$GROUP" ;;
               *) echo "Unsupported group: $GROUP" >&2; exit 1 ;;
             esac
           fi
@@ -77,9 +79,16 @@ jobs:
         run: |
           if [ "$GROUP" = "all-approved" ]; then
             python security/audit_snapshot.py --strict
+            python security/audit_all_binaries.py --enforce
           else
             python security/audit_snapshot.py
           fi
+
+      - name: Verify exact tracked paths before publishing
+        shell: bash
+        run: |
+          python -m py_compile security/audit_all_binaries.py
+          python -m unittest discover -s security -p "test_*.py" -v
 
       - name: Commit verified binaries to the selected branch
         shell: bash

@@ -3,10 +3,6 @@
     "windows/x64/ffmpeg/ffmpeg.exe",
     "windows/x64/ffmpeg/ffprobe.exe"
   ],
-  "windows_x86_ffmpeg": [
-    "windows/x86/ffmpeg/ffmpeg.exe",
-    "windows/x86/ffmpeg/ffprobe.exe"
-  ],
   "windows_arm64_ffmpeg": [
     "windows/arm64/ffmpeg/ffmpeg.exe",
     "windows/arm64/ffmpeg/ffprobe.exe"
@@ -15,38 +11,8 @@
     "windows/x64/bento4/mp4dump.exe",
     "windows/x64/bento4/mp4decrypt.exe"
   ],
-  "windows_x86_bento4": [
-    "windows/x86/bento4/mp4decrypt.exe",
-    "windows/x86/bento4/mp4dump.exe"
-  ],
-  "windows_arm64_bento4": [
-    "windows/arm64/bento4/mp4decrypt.exe",
-    "windows/arm64/bento4/mp4dump.exe"
-  ],
-  "darwin_x64_bento4": [
-    "darwin/x64/bento4/mp4decrypt",
-    "darwin/x64/bento4/mp4dump"
-  ],
-  "darwin_arm64_bento4": [
-    "darwin/arm64/bento4/mp4decrypt",
-    "darwin/arm64/bento4/mp4dump"
-  ],
-  "linux_x64_bento4": [
-    "linux/x64/bento4/mp4decrypt",
-    "linux/x64/bento4/mp4dump"
-  ],
-  "linux_arm64_bento4": [
-    "linux/arm64/bento4/mp4decrypt",
-    "linux/arm64/bento4/mp4dump"
-  ],
   "windows_x64_shaka_packager": [
     "windows/x64/shaka_packager/packager.exe"
-  ],
-  "windows_x86_shaka_packager": [
-    "windows/x86/shaka_packager/packager.exe"
-  ],
-  "windows_arm64_shaka_packager": [
-    "windows/arm64/shaka_packager/packager.exe"
   ],
   "darwin_x64_shaka_packager": [
     "darwin/x64/shaka_packager/packager"
@@ -87,11 +53,6 @@
     "windows/x86/mkvtoolnix/mkvmerge.exe",
     "windows/x86/mkvtoolnix/mkvinfo.exe",
     "windows/x86/mkvtoolnix/mkvpropedit.exe"
-  ],
-  "windows_arm64_mkvtoolnix": [
-    "windows/arm64/mkvtoolnix/mkvinfo.exe",
-    "windows/arm64/mkvtoolnix/mkvmerge.exe",
-    "windows/arm64/mkvtoolnix/mkvpropedit.exe"
   ],
   "windows_x64_velora": [
     "windows/x64/velora/velora.exe"
@@ -157,9 +118,6 @@
   ],
   "windows_x64_deno": [
     "windows/x64/deno/deno.exe"
-  ],
-  "windows_x86_deno": [
-    "windows/x86/deno/deno.exe"
   ],
   "windows_arm64_deno": [
     "windows/arm64/deno/deno.exe"

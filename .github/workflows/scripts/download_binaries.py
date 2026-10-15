@@ -1,9 +1,9 @@
 import argparse
+import hashlib
 import json
 import os
 import re
 import shutil
-import subprocess
 import tarfile
 import zipfile
 from pathlib import Path
@@ -14,10 +14,10 @@ import requests
 
 # Default versions (overridden by env vars, e.g. by the workflow after it
 # detects a newer version).
-FFMPEG_VERSION = os.environ.get("FFMPEG_VERSION", "n8.1")             # BtbN/FFmpeg-Builds release branch (nX.Y)
+FFMPEG_VERSION = os.environ.get("FFMPEG_VERSION", "n9.0")             # BtbN/FFmpeg-Builds release branch (nX.Y)
 BENTO4_VERSION = os.environ.get("BENTO4_VERSION", "1-6-0-641")         # version embedded in the bok.net filename
 SHAKA_PACKAGER_VERSION = os.environ.get("SHAKA_PACKAGER_VERSION", "v3.9.3")  # tag on shaka-project/shaka-packager
-DOVI_TOOL_VERSION = os.environ.get("DOVI_TOOL_VERSION", "2.3.3")
+DOVI_TOOL_VERSION = os.environ.get("DOVI_TOOL_VERSION", "2.3.4")
 MKVTOOLNIX_VERSION = os.environ.get("MKVTOOLNIX_VERSION", "100.0")
 VELORA_VERSION = os.environ.get("VELORA_VERSION", "")                  # Cargo.toml version on AstraeLabs/Velora@main
 YT_DLP_VERSION = os.environ.get("YT_DLP_VERSION", "")                  # release tag on yt-dlp/yt-dlp
@@ -78,6 +78,12 @@ class BinaryDownloader:
     def __init__(self, base_path: str = "./binaries"):
         self.base_path = Path(base_path)
         self.paths_json = {}
+        self.failures: list[str] = []
+        lock_path = Path(__file__).resolve().parents[3] / "security" / "trusted_source_hashes.json"
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        if lock.get("schema_version") != 1 or not isinstance(lock.get("sha256_by_url"), dict):
+            raise RuntimeError("Invalid trusted source SHA-256 lockfile")
+        self.trusted_sha256 = lock["sha256_by_url"]
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -108,17 +114,48 @@ class BinaryDownloader:
         session: Optional[requests.Session] = None,
         headers: Optional[dict] = None,
     ) -> bool:
+        """Fail closed: an exact, reviewed SHA-256 pin is required before downloading.
+
+        Never overwrite a previously committed binary unless the full download
+        matches its pinned source digest. These pins attest to downloaded bytes,
+        not to the absence of malware or to reproducible builds.
+        """
+        temporary = dest.with_name(dest.name + ".unverified")
         try:
-            response = (session or self.session).get(url, headers=headers, stream=True, timeout=60)
-            response.raise_for_status()
+            from urllib.parse import urlsplit
 
-            with open(dest, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+            if not isinstance(url, str) or urlsplit(url).scheme != "https":
+                raise ValueError("Only HTTPS sources are allowed")
+            expected = self.trusted_sha256.get(url)
+            if not isinstance(expected, str) or re.fullmatch(r"[0-9a-f]{64}", expected) is None:
+                raise ValueError(f"No reviewed SHA-256 pin for: {url}")
 
+            # Do not trust the Content-Length alone. Hash the downloaded bytes.
+            with (session or self.session).get(url, headers=headers, stream=True, timeout=120) as response:
+                response.raise_for_status()
+                digest = hashlib.sha256()
+                size = 0
+                with temporary.open("wb") as f:
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if not chunk:
+                            continue
+                        size += len(chunk)
+                        if size > 512 * 1024 * 1024:
+                            raise ValueError("Download exceeds 512 MiB limit")
+                        digest.update(chunk)
+                        f.write(chunk)
+
+            calculated = digest.hexdigest()
+            if calculated != expected:
+                raise ValueError(f"SHA-256 mismatch: expected {expected}, got {calculated}")
+            temporary.replace(dest)
+            print(f"  [verified] {dest.name}: sha256={calculated}")
             return True
-        except Exception as e:
-            print(f"  X {url.split('/')[-1]}: {str(e)[:50]}")
+        except Exception as exc:
+            temporary.unlink(missing_ok=True)
+            message = f"{url}: {exc}"
+            self.failures.append(message)
+            print(f"  [blocked] {message}")
             return False
 
     def _add_path(self, platform: str, arch: str, tool: str, binary: str):
@@ -569,7 +606,7 @@ class BinaryDownloader:
             target_dir.mkdir(parents=True, exist_ok=True)
             dest = target_dir / filename
 
-            if self._download(asset["url"], dest, session=gh_session, headers={"Accept": "application/octet-stream"}):
+            if self._download(asset["browser_download_url"], dest):
                 if platform_name != "windows":
                     os.chmod(dest, 0o755)
                 self._add_path(platform_name, arch, tool, filename)
@@ -579,29 +616,6 @@ class BinaryDownloader:
         if not downloaded:
             print("  X no Velora asset downloaded")
             return
-
-        # Safety guard: refuse to publish if the downloaded binary's own
-        # reported version does not match the Cargo.toml version we expect.
-        # This protects against the release build still being in flight
-        # while Cargo.toml on main has already been bumped.
-        if VELORA_VERSION:
-            linux_x64 = next(
-                (dest for (p, a, t, _name, dest) in downloaded if p == "linux" and a == "x64" and t == "velora"),
-                None,
-            )
-            if linux_x64 is not None:
-                try:
-                    out = subprocess.run([str(linux_x64), "--version"], capture_output=True, timeout=15, text=True)
-                    reported = json.loads(out.stdout.splitlines()[0]).get("version", "")
-                except Exception as e:
-                    reported = None
-                    print(f"  ! could not verify Velora version: {str(e)[:60]}")
-
-                if reported is not None and reported != VELORA_VERSION:
-                    raise RuntimeError(
-                        f"Velora release asset reports '{reported}' but Cargo.toml is '{VELORA_VERSION}'. "
-                        "Refusing to publish a mismatched binary — the release build is likely still in flight."
-                    )
 
         self._write_version_file("velora", VELORA_VERSION or "unknown")
 
@@ -633,7 +647,7 @@ class BinaryDownloader:
             target_dir.mkdir(parents=True, exist_ok=True)
             dest = target_dir / filename
 
-            if self._download(asset["url"], dest, session=gh_session, headers={"Accept": "application/octet-stream"}):
+            if self._download(asset["browser_download_url"], dest):
                 if platform_name != "windows":
                     os.chmod(dest, 0o755)
                 self._add_path(platform_name, arch, tool, filename)
@@ -643,28 +657,6 @@ class BinaryDownloader:
         if not downloaded:
             print("  X no Flux asset downloaded")
             return
-
-        # Same guard as Velora, but `flux --version` prints plain text
-        # ("flux 0.5.0"), not JSON, so the version is matched with a regex.
-        if FLUX_VERSION:
-            linux_x64 = next(
-                (dest for (p, a, t, _name, dest) in downloaded if p == "linux" and a == "x64" and t == "flux"),
-                None,
-            )
-            if linux_x64 is not None:
-                try:
-                    out = subprocess.run([str(linux_x64), "--version"], capture_output=True, timeout=15, text=True)
-                    m = re.search(r"(\d+\.\d+\.\d+)", out.stdout + out.stderr)
-                    reported = m.group(1) if m else None
-                except Exception as e:
-                    reported = None
-                    print(f"  ! could not verify Flux version: {str(e)[:60]}")
-
-                if reported is not None and reported != FLUX_VERSION:
-                    raise RuntimeError(
-                        f"Flux release asset reports '{reported}' but flux/Cargo.toml is '{FLUX_VERSION}'. "
-                        "Refusing to publish a mismatched binary — the release build is likely still in flight."
-                    )
 
         self._write_version_file("flux", FLUX_VERSION or "unknown")
 
@@ -818,6 +810,11 @@ class BinaryDownloader:
                 fn()
             else:
                 print(f"Unknown tool ignored: {name}")
+        if self.failures:
+            raise RuntimeError(
+                f"Refusing to publish partially verified downloads ({len(self.failures)} failures):\n"
+                + "\n".join(self.failures)
+            )
         self.save_paths_json()
 
 

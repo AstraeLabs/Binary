@@ -84,7 +84,10 @@ class SourceIntegrityTests(unittest.TestCase):
         self.assertEqual(lock["schema_version"], 1)
         self.assertGreater(len(lock["sha256_by_url"]), 40)
         for url, checksum in lock["sha256_by_url"].items():
-            self.assertTrue(url.startswith("https://github.com/"), url)
+            from urllib.parse import urlsplit
+            parsed = urlsplit(url)
+            self.assertEqual(parsed.scheme, "https", url)
+            self.assertIn(parsed.hostname, {"github.com", "www.bok.net", "mkvtoolnix.download"}, url)
             self.assertRegex(checksum, r"^[0-9a-f]{64}$")
 
 

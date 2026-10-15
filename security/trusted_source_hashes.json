@@ -57,6 +57,10 @@
     "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_aarch64": "b16e4dab368a816cd05d477d698a605a6ae87ccee1c8ffd38fa21d7254141fcc",
     "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos": "0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202",
     "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_x86.exe": "a8f91bd41452506bc81ebd2f369b186fea0ee7075413ba00cef9fd346a0a5d0c",
-    "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe": "66674953fe251b89f4d08c5f0e35e0728679bd67ab3d7d05c0562af101dd3e7a"
-  }
+    "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe": "66674953fe251b89f4d08c5f0e35e0728679bd67ab3d7d05c0562af101dd3e7a",
+    "https://mkvtoolnix.download/windows/releases/100.0/mkvtoolnix-32-bit-100.0.zip": "5cb4932f72d1a2daa4348ee96ee74d1731002d082d1748fc962873c28fcefa7f",
+    "https://mkvtoolnix.download/windows/releases/100.0/mkvtoolnix-64-bit-100.0.zip": "5b9f0cf3c52a2f0d9e03e3b36413d42ad6ef455d8f4eeffb70a43e3b7df29c00",
+    "https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-641.x86_64-microsoft-win32.zip": "6916a390f75878872594be74554b8b54ab220bb29812424441a8e1ecc9a6ac5e"
+  },
+  "provenance_notes": "Additional Bento4 Windows x64 digest cross-checked with ScoopInstaller/Main bento4 manifest; MKVToolNix 100.0 ZIPs checked with publisher's sha256sums.txt at mkvtoolnix.download/windows/releases/100.0/. Unverified platform builds excluded from publishing."
 }

@@ -45,11 +45,7 @@ SOURCES = {
         "yt-dlp_linux_aarch64": ["linux/arm64/yt-dlp/yt-dlp"],
     },
     "shaka-project/shaka-packager/v3.9.3": {
-        "packager-win-x64.exe": [
-            "windows/x64/shaka_packager/packager.exe",
-            "windows/x86/shaka_packager/packager.exe",
-            "windows/arm64/shaka_packager/packager.exe",
-        ],
+        "packager-win-x64.exe": ["windows/x64/shaka_packager/packager.exe"],
         "packager-osx-x64": ["darwin/x64/shaka_packager/packager"],
         "packager-osx-arm64": ["darwin/arm64/shaka_packager/packager"],
         "packager-linux-x64": ["linux/x64/shaka_packager/packager"],

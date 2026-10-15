@@ -29,3 +29,5 @@ jobs:
           python -m py_compile security/test_source_integrity.py
       - name: Verify fail-closed source integrity
         run: python -m unittest discover -s security -p "test_*.py" -v
+      - name: Audit existing standalone release executables (report only)
+        run: python security/audit_snapshot.py

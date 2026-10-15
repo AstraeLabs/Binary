@@ -1,0 +1,89 @@
+name: Refresh SHA-256-pinned binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      group:
+        description: "Only tools with reviewed SHA-256 source pins may be updated"
+        type: choice
+        required: true
+        default: all-approved
+        options:
+          - all-approved
+          - ffmpeg
+          - shaka
+          - dovi_tool
+          - velora
+          - flux
+          - yt-dlp
+          - deno
+  push:
+    branches:
+      - security/verified-binary-sources-20261015
+    paths:
+      - .github/workflows/refresh-pinned-binaries.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pinned-binaries-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Download, verify, and commit reviewed binaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout including Git LFS binaries
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install download dependencies
+        run: python -m pip install requests
+
+      - name: Test source integrity enforcement
+        run: python -m unittest discover -s security -p "test_*.py" -v
+
+      - name: Download only SHA-256-approved sources
+        env:
+          GROUP: ${{ inputs.group || 'all-approved' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$GROUP" = "all-approved" ]; then
+            tools="ffmpeg,shaka,dovi_tool,velora,flux,yt-dlp,deno"
+          else
+            case "$GROUP" in
+              ffmpeg|shaka|dovi_tool|velora|flux|yt-dlp|deno) tools="$GROUP" ;;
+              *) echo "Unsupported group: $GROUP" >&2; exit 1 ;;
+            esac
+          fi
+          python .github/workflows/scripts/download_binaries.py --only "$tools"
+
+      - name: Validate all standalone source-matched files
+        # Never publish a partial snapshot after a failed or tampered refresh.
+        run: python security/audit_snapshot.py --strict
+
+      - name: Commit verified binaries to the selected branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git lfs install --local
+          git add .gitattributes binaries binary_paths.json
+          if git diff --cached --quiet; then
+            echo "No binaries changed."
+            exit 0
+          fi
+          git commit -m "chore(security): refresh pinned and SHA-256-verified binaries"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

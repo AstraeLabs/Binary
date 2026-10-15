@@ -44,6 +44,9 @@ jobs:
           lfs: true
           persist-credentials: true
 
+      - name: Verify downloaded Git LFS object integrity
+        run: git lfs fsck --objects
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -54,6 +57,12 @@ jobs:
 
       - name: Test source integrity enforcement
         run: python -m unittest discover -s security -p "test_*.py" -v
+
+      - name: Validate Python source before accessing releases
+        run: |
+          python -m py_compile .github/workflows/scripts/download_binaries.py
+          python -m py_compile security/audit_all_binaries.py
+          python -m unittest discover -s security -p "test_*.py" -v
 
       - name: Download only SHA-256-approved sources
         env:

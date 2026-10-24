@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "policy": "Exact SHA-256 pins for immutable, versioned release assets, recorded from vendor-published release metadata on 2026-10-15. Rolling sources (Flux, Velora, FFmpeg-Builds 'latest') and releases without a pin yet are verified against the digest the publisher lists for that release at download time. Verify provenance independently; a digest alone does not prove malware-free content.",
+  "sha256_by_url": {
+    "https://github.com/denoland/deno/releases/download/v2.9.7/deno-aarch64-apple-darwin.zip": "5cd46d6268f6f78f5d88bdc7159d20bd44cdaa4b3303474839f87ec6fe7ae25c",
+    "https://github.com/denoland/deno/releases/download/v2.9.7/deno-aarch64-pc-windows-msvc.zip": "c4c4ac8bfdaa37814bda5c05fc9cdf2154904e2ef8277673a30bdceaaa649807",
+    "https://github.com/denoland/deno/releases/download/v2.9.7/deno-aarch64-unknown-linux-gnu.zip": "c832298b1ad4422481334855f6003e0f54145762c5a134f20a489511d2f65bbf",
+    "https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-apple-darwin.zip": "95daaff11c116a52ad54785e7914c8e9c9cdcaba793c5ed929c74ca2d8e6259a",
+    "https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-pc-windows-msvc.zip": "a0c3101b4158d1dfb7d6a78a7bf0f3de80c96bb423c152beec8beb22786f2238",
+    "https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip": "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490",
+    "https://github.com/quietvoid/dovi_tool/releases/download/2.3.4/dovi_tool-2.3.4-aarch64-pc-windows-msvc.zip": "4056206e28f7d733fd8a29add91d286d22956b41138d6ae0d51dbbf2289d9483",
+    "https://github.com/quietvoid/dovi_tool/releases/download/2.3.4/dovi_tool-2.3.4-aarch64-unknown-linux-musl.tar.gz": "b4f22a7db56954efe4ed8d02276d0f991799e84602f3584711be6c9df950cb15",
+    "https://github.com/quietvoid/dovi_tool/releases/download/2.3.4/dovi_tool-2.3.4-universal-macOS.zip": "30d4f512eb67b7f1632cd28be5c62989bedad23f4710578aafc20c384b48ece6",
+    "https://github.com/quietvoid/dovi_tool/releases/download/2.3.4/dovi_tool-2.3.4-x86_64-pc-windows-msvc.zip": "0d9733d311dfe49f9dca0c350f7e6d978182673d333c6f07f7365daf9e6c81eb",
+    "https://github.com/quietvoid/dovi_tool/releases/download/2.3.4/dovi_tool-2.3.4-x86_64-unknown-linux-musl.tar.gz": "1844258e13c26607b32224bf1fa82b595d3b35949f5467405fda560daad32b3f",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp.exe": "66674953fe251b89f4d08c5f0e35e0728679bd67ab3d7d05c0562af101dd3e7a",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_arm64.exe": "05b438997bafc3affdfda9d041353c9d73e04dc842207254b655b0887c4445b0",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_linux": "58162f9bfdc27458ea47bfcb311cf47028f17d8154a8bf7d689861d46399230a",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_linux_aarch64": "b16e4dab368a816cd05d477d698a605a6ae87ccee1c8ffd38fa21d7254141fcc",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_macos": "0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_x86.exe": "a8f91bd41452506bc81ebd2f369b186fea0ee7075413ba00cef9fd346a0a5d0c",
+    "https://mkvtoolnix.download/windows/releases/100.0/mkvtoolnix-32-bit-100.0.zip": "5cb4932f72d1a2daa4348ee96ee74d1731002d082d1748fc962873c28fcefa7f",
+    "https://mkvtoolnix.download/windows/releases/100.0/mkvtoolnix-64-bit-100.0.zip": "5b9f0cf3c52a2f0d9e03e3b36413d42ad6ef455d8f4eeffb70a43e3b7df29c00"
+  },
+  "provenance_notes": "MKVToolNix 100.0 ZIPs checked with publisher's sha256sums.txt at mkvtoolnix.download/windows/releases/100.0/."
+}

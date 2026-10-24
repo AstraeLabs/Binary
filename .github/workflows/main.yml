@@ -1,4 +1,4 @@
-name: Update FFmpeg / Bento4 / Shaka Packager / dovi_tool / MKVToolNix / Velora / Flux / yt-dlp / deno binaries
+name: Update FFmpeg / dovi_tool / MKVToolNix / Velora / Flux / yt-dlp / deno binaries
 
 on:
   schedule:
@@ -14,8 +14,6 @@ on:
         options:
           - all
           - ffmpeg
-          - bento4
-          - shaka
           - dovi_tool
           - mkvtoolnix
           - velora
@@ -42,10 +40,6 @@ jobs:
       any_changed: ${{ steps.check.outputs.any_changed }}
       ffmpeg_changed: ${{ steps.check.outputs.ffmpeg_changed }}
       ffmpeg_latest: ${{ steps.check.outputs.ffmpeg_latest }}
-      bento4_changed: ${{ steps.check.outputs.bento4_changed }}
-      bento4_latest: ${{ steps.check.outputs.bento4_latest }}
-      shaka_changed: ${{ steps.check.outputs.shaka_changed }}
-      shaka_latest: ${{ steps.check.outputs.shaka_latest }}
       dovi_tool_changed: ${{ steps.check.outputs.dovi_tool_changed }}
       dovi_tool_latest: ${{ steps.check.outputs.dovi_tool_latest }}
       mkvtoolnix_changed: ${{ steps.check.outputs.mkvtoolnix_changed }}
@@ -84,8 +78,6 @@ jobs:
           echo "| Tool | Changed | Latest version |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
           echo "| FFmpeg | ${{ steps.check.outputs.ffmpeg_changed }} | ${{ steps.check.outputs.ffmpeg_latest }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Bento4 | ${{ steps.check.outputs.bento4_changed }} | ${{ steps.check.outputs.bento4_latest }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Shaka Packager | ${{ steps.check.outputs.shaka_changed }} | ${{ steps.check.outputs.shaka_latest }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| dovi_tool | ${{ steps.check.outputs.dovi_tool_changed }} | ${{ steps.check.outputs.dovi_tool_latest }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| MKVToolNix | ${{ steps.check.outputs.mkvtoolnix_changed }} | ${{ steps.check.outputs.mkvtoolnix_latest }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Velora | ${{ steps.check.outputs.velora_changed }} | ${{ steps.check.outputs.velora_latest }} |" >> "$GITHUB_STEP_SUMMARY"
@@ -122,8 +114,6 @@ jobs:
           TOOL_INPUT: ${{ github.event.inputs.tool }}
           FORCE_INPUT: ${{ github.event.inputs.force }}
           FFMPEG_CHANGED: ${{ needs.check.outputs.ffmpeg_changed }}
-          BENTO4_CHANGED: ${{ needs.check.outputs.bento4_changed }}
-          SHAKA_CHANGED: ${{ needs.check.outputs.shaka_changed }}
           DOVI_TOOL_CHANGED: ${{ needs.check.outputs.dovi_tool_changed }}
           MKVTOOLNIX_CHANGED: ${{ needs.check.outputs.mkvtoolnix_changed }}
           VELORA_CHANGED: ${{ needs.check.outputs.velora_changed }}
@@ -137,7 +127,7 @@ jobs:
             only="$TOOL_INPUT"
           else
             only=""
-            for pair in "ffmpeg:$FFMPEG_CHANGED" "bento4:$BENTO4_CHANGED" "shaka:$SHAKA_CHANGED" \
+            for pair in "ffmpeg:$FFMPEG_CHANGED" \
                         "dovi_tool:$DOVI_TOOL_CHANGED" "mkvtoolnix:$MKVTOOLNIX_CHANGED" "velora:$VELORA_CHANGED" \
                         "flux:$FLUX_CHANGED" "yt-dlp:$YT_DLP_CHANGED" "deno:$DENO_CHANGED"; do
               name="${pair%%:*}"
@@ -154,8 +144,6 @@ jobs:
       - name: Download updated binaries
         env:
           FFMPEG_VERSION: ${{ needs.check.outputs.ffmpeg_latest }}
-          BENTO4_VERSION: ${{ needs.check.outputs.bento4_latest }}
-          SHAKA_PACKAGER_VERSION: ${{ needs.check.outputs.shaka_latest }}
           DOVI_TOOL_VERSION: ${{ needs.check.outputs.dovi_tool_latest }}
           MKVTOOLNIX_VERSION: ${{ needs.check.outputs.mkvtoolnix_latest }}
           VELORA_VERSION: ${{ needs.check.outputs.velora_latest }}
@@ -183,10 +171,6 @@ jobs:
           msg="chore(binaries): weekly update"
           [ "${{ needs.check.outputs.ffmpeg_changed }}" = "true" ] && msg="${msg}
           - FFmpeg -> ${{ needs.check.outputs.ffmpeg_latest }}"
-          [ "${{ needs.check.outputs.bento4_changed }}" = "true" ] && msg="${msg}
-          - Bento4 -> ${{ needs.check.outputs.bento4_latest }}"
-          [ "${{ needs.check.outputs.shaka_changed }}" = "true" ] && msg="${msg}
-          - Shaka Packager -> ${{ needs.check.outputs.shaka_latest }}"
           [ "${{ needs.check.outputs.dovi_tool_changed }}" = "true" ] && msg="${msg}
           - dovi_tool -> ${{ needs.check.outputs.dovi_tool_latest }}"
           [ "${{ needs.check.outputs.mkvtoolnix_changed }}" = "true" ] && msg="${msg}

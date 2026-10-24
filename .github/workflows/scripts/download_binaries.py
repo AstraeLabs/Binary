@@ -1,36 +1,40 @@
 import argparse
+import hashlib
 import json
 import os
 import re
 import shutil
-import subprocess
 import tarfile
 import zipfile
 from pathlib import Path
 from typing import Dict, Optional, Tuple
+from urllib.parse import urlsplit
 
 import requests
 
 
 # Default versions (overridden by env vars, e.g. by the workflow after it
 # detects a newer version).
-FFMPEG_VERSION = os.environ.get("FFMPEG_VERSION", "n8.1")             # BtbN/FFmpeg-Builds release branch (nX.Y)
-BENTO4_VERSION = os.environ.get("BENTO4_VERSION", "1-6-0-641")         # version embedded in the bok.net filename
-SHAKA_PACKAGER_VERSION = os.environ.get("SHAKA_PACKAGER_VERSION", "v3.9.3")  # tag on shaka-project/shaka-packager
-DOVI_TOOL_VERSION = os.environ.get("DOVI_TOOL_VERSION", "2.3.3")
+FFMPEG_VERSION = os.environ.get("FFMPEG_VERSION", "n9.0")             # BtbN/FFmpeg-Builds release branch (nX.Y)
+DOVI_TOOL_VERSION = os.environ.get("DOVI_TOOL_VERSION", "2.3.4")
 MKVTOOLNIX_VERSION = os.environ.get("MKVTOOLNIX_VERSION", "100.0")
-VELORA_VERSION = os.environ.get("VELORA_VERSION", "")                  # Cargo.toml version on AstraeLabs/Velora@main
-YT_DLP_VERSION = os.environ.get("YT_DLP_VERSION", "")                  # release tag on yt-dlp/yt-dlp
-DENO_VERSION = os.environ.get("DENO_VERSION", "")                      # release tag on denoland/deno
+VELORA_VERSION = os.environ.get("VELORA_VERSION", "2.2.0")                  # Cargo.toml version on AstraeLabs/Velora@main
+YT_DLP_VERSION = os.environ.get("YT_DLP_VERSION", "2026.08.19")                  # release tag on yt-dlp/yt-dlp
+DENO_VERSION = os.environ.get("DENO_VERSION", "v2.9.7")                      # release tag on denoland/deno
 
 FFMPEG_URL_BASE = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
-BENTO4_URL = "https://www.bok.net/Bento4/binaries"
-SHAKA_PACKAGER_URL_BASE = "https://github.com/shaka-project/shaka-packager/releases/download"
 DOVI_TOOL_URL_BASE = "https://github.com/quietvoid/dovi_tool/releases/download"
 MKVTOOLNIX_URL = f"https://mkvtoolnix.download/windows/releases/{MKVTOOLNIX_VERSION}"
 
-YT_DLP_URL_BASE = "https://github.com/yt-dlp/yt-dlp/releases/latest/download"
-DENO_URL_BASE = "https://github.com/denoland/deno/releases/latest/download"
+# Versioned URLs keep the digest lookup and the download on the same immutable release.
+YT_DLP_URL_BASE = (
+    f"https://github.com/yt-dlp/yt-dlp/releases/download/{YT_DLP_VERSION}"
+    if YT_DLP_VERSION else "https://github.com/yt-dlp/yt-dlp/releases/latest/download"
+)
+DENO_URL_BASE = (
+    f"https://github.com/denoland/deno/releases/download/{DENO_VERSION}"
+    if DENO_VERSION else "https://github.com/denoland/deno/releases/latest/download"
+)
 
 VELORA_OWNER = "AstraeLabs"
 VELORA_REPO = "Velora"
@@ -53,7 +57,7 @@ VELORA_ASSET_MAP: Dict[str, Tuple[str, str, str, str]] = {
     "velora-termux-arm":     ("linux",   "arm",   "velora_termux", "velora"),
 }
 
-FLUX_VERSION = os.environ.get("FLUX_VERSION", "")                      # Cargo.toml version on AstraeLabs/Flux@main
+FLUX_VERSION = os.environ.get("FLUX_VERSION", "0.5.2")                      # Cargo.toml version on AstraeLabs/Flux@main
 FLUX_OWNER = "AstraeLabs"
 FLUX_REPO = "Flux"
 FLUX_TAG = "Init"
@@ -70,7 +74,6 @@ FLUX_ASSET_MAP: Dict[str, Tuple[str, str, str, str]] = {
     "flux-termux-arm":       ("linux",   "arm",   "flux_termux", "flux"),
 }
 
-SHAKA_PACKAGER_URL = f"{SHAKA_PACKAGER_URL_BASE}/{SHAKA_PACKAGER_VERSION}"
 DOVI_TOOL_URL = f"{DOVI_TOOL_URL_BASE}/{DOVI_TOOL_VERSION}"
 
 
@@ -78,6 +81,13 @@ class BinaryDownloader:
     def __init__(self, base_path: str = "./binaries"):
         self.base_path = Path(base_path)
         self.paths_json = {}
+        self.failures: list[str] = []
+        self._digest_cache: Dict[Tuple[str, str], Dict[str, str]] = {}
+        lock_path = Path(__file__).resolve().parents[3] / "security" / "trusted_source_hashes.json"
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        if lock.get("schema_version") != 1 or not isinstance(lock.get("sha256_by_url"), dict):
+            raise RuntimeError("Invalid trusted source SHA-256 lockfile")
+        self.trusted_sha256 = lock["sha256_by_url"]
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -96,10 +106,73 @@ class BinaryDownloader:
             for arch in arches:
                 if platform_name != "darwin":
                     (self.base_path / platform_name / arch / "ffmpeg").mkdir(parents=True, exist_ok=True)
-                (self.base_path / platform_name / arch / "bento4").mkdir(parents=True, exist_ok=True)
-                (self.base_path / platform_name / arch / "shaka_packager").mkdir(parents=True, exist_ok=True)
                 (self.base_path / platform_name / arch / "yt-dlp").mkdir(parents=True, exist_ok=True)
                 (self.base_path / platform_name / arch / "deno").mkdir(parents=True, exist_ok=True)
+
+    def _github_api(self, path: str) -> dict:
+        headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+        if VELORA_GITHUB_TOKEN:
+            headers["Authorization"] = f"Bearer {VELORA_GITHUB_TOKEN}"
+        response = self.session.get(f"https://api.github.com{path}", headers=headers, timeout=30)
+        response.raise_for_status()
+        return response.json()
+
+    def _upstream_digests(self, url: str) -> Optional[Dict[str, str]]:
+        """Digests the publisher itself lists next to the file, keyed by file name.
+
+        GitHub release assets carry a server-computed `digest`; MKVToolNix
+        publishes a sha256sums.txt. Cached per release so a refresh costs one
+        lookup per release instead of one per file.
+        """
+        parts = urlsplit(url)
+        segments = parts.path.strip("/").split("/")
+        api_path = None
+        if parts.hostname == "github.com" and len(segments) == 6 and segments[2] == "releases":
+            owner, repo = segments[:2]
+            if segments[3] == "download":  # /<owner>/<repo>/releases/download/<tag>/<name>
+                api_path = f"/repos/{owner}/{repo}/releases/tags/{segments[4]}"
+            elif segments[3:5] == ["latest", "download"]:  # .../releases/latest/download/<name>
+                api_path = f"/repos/{owner}/{repo}/releases/latest"
+            else:
+                return None
+        elif parts.hostname != "mkvtoolnix.download":
+            return None
+
+        cache_key = (parts.hostname, "/".join(segments[:-1]))
+        if cache_key not in self._digest_cache:
+            digests: Dict[str, str] = {}
+            if api_path:
+                for asset in self._github_api(api_path).get("assets", []):
+                    digest = asset.get("digest") or ""
+                    if digest.startswith("sha256:"):
+                        digests[asset["name"]] = digest[len("sha256:"):]
+            else:
+                sums_url = url.rsplit("/", 1)[0] + "/sha256sums.txt"
+                response = self.session.get(sums_url, timeout=30)
+                response.raise_for_status()
+                for line in response.text.splitlines():
+                    fields = line.split()
+                    if len(fields) == 2:
+                        digests[fields[1].lstrip("*")] = fields[0].lower()
+            self._digest_cache[cache_key] = digests
+        return self._digest_cache[cache_key]
+
+    def _expected_sha256(self, url: str) -> str:
+        """Reviewed pin if there is one, otherwise the digest the publisher lists.
+
+        Immutable versioned releases are pinned in trusted_source_hashes.json.
+        Rolling sources (Flux/Velora/FFmpeg tags that are re-uploaded, or a new
+        upstream version that has no pin yet) are checked against the
+        publisher's own digest, so a new release never needs a manual edit.
+        """
+        pinned = self.trusted_sha256.get(url)
+        if isinstance(pinned, str) and re.fullmatch(r"[0-9a-f]{64}", pinned):
+            return pinned
+        digests = self._upstream_digests(url)
+        expected = (digests or {}).get(url.rsplit("/", 1)[-1])
+        if not expected or re.fullmatch(r"[0-9a-f]{64}", expected) is None:
+            raise ValueError(f"No SHA-256 pin or publisher digest for: {url}")
+        return expected
 
     def _download(
         self,
@@ -108,17 +181,44 @@ class BinaryDownloader:
         session: Optional[requests.Session] = None,
         headers: Optional[dict] = None,
     ) -> bool:
+        """Fail closed: an expected SHA-256 (pin or publisher digest) is required.
+
+        Never overwrite a previously committed binary unless the full download
+        matches that digest. This attests to downloaded bytes, not to the
+        absence of malware or to reproducible builds.
+        """
+        temporary = dest.with_name(dest.name + ".unverified")
         try:
-            response = (session or self.session).get(url, headers=headers, stream=True, timeout=60)
-            response.raise_for_status()
+            if not isinstance(url, str) or urlsplit(url).scheme != "https":
+                raise ValueError("Only HTTPS sources are allowed")
+            expected = self._expected_sha256(url)
 
-            with open(dest, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+            # Do not trust the Content-Length alone. Hash the downloaded bytes.
+            with (session or self.session).get(url, headers=headers, stream=True, timeout=120) as response:
+                response.raise_for_status()
+                digest = hashlib.sha256()
+                size = 0
+                with temporary.open("wb") as f:
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if not chunk:
+                            continue
+                        size += len(chunk)
+                        if size > 512 * 1024 * 1024:
+                            raise ValueError("Download exceeds 512 MiB limit")
+                        digest.update(chunk)
+                        f.write(chunk)
 
+            calculated = digest.hexdigest()
+            if calculated != expected:
+                raise ValueError(f"SHA-256 mismatch: expected {expected}, got {calculated}")
+            temporary.replace(dest)
+            print(f"  [verified] {dest.name}: sha256={calculated}")
             return True
-        except Exception as e:
-            print(f"  X {url.split('/')[-1]}: {str(e)[:50]}")
+        except Exception as exc:
+            temporary.unlink(missing_ok=True)
+            message = f"{url}: {exc}"
+            self.failures.append(message)
+            print(f"  [blocked] {message}")
             return False
 
     def _add_path(self, platform: str, arch: str, tool: str, binary: str):
@@ -211,8 +311,7 @@ class BinaryDownloader:
                     any_success = any_success or success > 0
                 else:
                     if platform_name == 'windows' and arch == 'x86':
-                        copied = self._copy_binary('windows', 'x64', arch, 'ffmpeg')
-                        print(f"copied from x64: {copied}/2")
+                        print("skip (no independently pinned x86 build)")
                     else:
                         print("skip (no upstream build)")
 
@@ -253,143 +352,6 @@ class BinaryDownloader:
             read_tar_member,
             tf.close,
         )
-
-    def download_bento4(self):
-        print(f"\n=== Bento4 ({BENTO4_VERSION}) ===")
-
-        bento4_map = {
-            'windows': {
-                'x64': 'x86_64-microsoft-win32',
-            },
-            'darwin': {
-                'x64': 'universal-apple-macosx',
-                'arm64': 'universal-apple-macosx'
-            },
-            'linux': {
-                'x64': 'x86_64-unknown-linux',
-            }
-        }
-
-        executables = {
-            'windows': ['mp4decrypt.exe', 'mp4dump.exe'],
-            'darwin': ['mp4decrypt', 'mp4dump'],
-            'linux': ['mp4decrypt', 'mp4dump']
-        }
-
-        any_success = False
-        for platform_name, arches in self.platforms.items():
-            for arch in arches:
-                print(f"{platform_name}-{arch}: ", end="", flush=True)
-
-                platform_str = bento4_map.get(platform_name, {}).get(arch)
-
-                if platform_str:
-                    url = f"{BENTO4_URL}/Bento4-SDK-{BENTO4_VERSION}.{platform_str}.zip"
-
-                    target_dir = self.base_path / platform_name / arch / "bento4"
-                    zip_path = target_dir / "bento4.zip"
-
-                    if not self._download(url, zip_path):
-                        print("0/2")
-                        continue
-
-                    success = 0
-                    try:
-                        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                            for zip_info in zip_ref.filelist:
-                                for executable in executables[platform_name]:
-                                    if zip_info.filename.endswith(executable):
-                                        temp_path = target_dir / "temp"
-                                        temp_path.mkdir(exist_ok=True)
-
-                                        zip_ref.extract(zip_info, temp_path)
-                                        src = temp_path / zip_info.filename
-                                        dst = target_dir / executable
-
-                                        shutil.move(str(src), str(dst))
-
-                                        if platform_name != "windows":
-                                            os.chmod(dst, 0o755)
-
-                                        self._add_path(platform_name, arch, "bento4", executable)
-                                        success += 1
-
-                                        if temp_path.exists():
-                                            shutil.rmtree(temp_path)
-
-                        zip_path.unlink()
-                    except Exception as e:
-                        print(f"  X extract: {str(e)[:40]}")
-
-                    print(f"{success}/2")
-                    any_success = any_success or success > 0
-                else:
-                    if platform_name == 'windows' and arch in ['x86', 'arm64']:
-                        copied = self._copy_binary('windows', 'x64', arch, 'bento4')
-                        print(f"copied from x64: {copied}/2")
-                    elif platform_name == 'linux' and arch in ['arm', 'arm64']:
-                        copied = self._copy_binary('linux', 'x64', arch, 'bento4')
-                        print(f"copied from x64: {copied}/2")
-                    else:
-                        print("skip")
-
-        if any_success:
-            self._write_version_file("bento4", BENTO4_VERSION)
-
-    def download_shaka_packager(self):
-        print(f"\n=== Shaka Packager ({SHAKA_PACKAGER_VERSION}) ===")
-
-        shaka_map = {
-            'windows': {
-                'x64': 'win-x64',
-            },
-            'darwin': {
-                'x64': 'osx-x64',
-                'arm64': 'osx-arm64'
-            },
-            'linux': {
-                'x64': 'linux-x64',
-                'arm64': 'linux-arm64'
-            }
-        }
-
-        any_success = False
-        for platform_name, arches in self.platforms.items():
-            for arch in arches:
-                print(f"{platform_name}-{arch}: ", end="", flush=True)
-
-                platform_str = shaka_map.get(platform_name, {}).get(arch)
-
-                if platform_str:
-                    target_dir = self.base_path / platform_name / arch / "shaka_packager"
-                    ext = ".exe" if platform_name == "windows" else ""
-                    success = 0
-
-                    for binary_base in ['packager']:
-                        filename = f"{binary_base}-{platform_str}{ext}"
-                        url = f"{SHAKA_PACKAGER_URL}/{filename}"
-                        final_path = target_dir / f"{binary_base}{ext}"
-
-                        if self._download(url, final_path):
-                            if platform_name != "windows":
-                                os.chmod(final_path, 0o755)
-
-                            self._add_path(platform_name, arch, "shaka_packager", f"{binary_base}{ext}")
-                            success += 1
-
-                    print(f"{success}/2")
-                    any_success = any_success or success > 0
-                else:
-                    if platform_name == 'windows' and arch in ['x86', 'arm64']:
-                        copied = self._copy_binary('windows', 'x64', arch, 'shaka_packager')
-                        print(f"copied from x64: {copied}/2")
-                    elif platform_name == 'linux' and arch in ['arm']:
-                        print("not available")
-                    else:
-                        print("skip")
-
-        if any_success:
-            self._write_version_file("shaka_packager", SHAKA_PACKAGER_VERSION)
 
     def download_dovi_tool(self):
         print(f"\n=== dovi_tool ({DOVI_TOOL_VERSION}) ===")
@@ -495,10 +457,7 @@ class BinaryDownloader:
 
                 filename = mkvtoolnix_map.get(arch)
                 if not filename:
-                    dst_dir = self.base_path / platform_name / arch / "mkvtoolnix"
-                    dst_dir.mkdir(parents=True, exist_ok=True)
-                    copied = self._copy_binary('windows', 'x64', arch, 'mkvtoolnix')
-                    print(f"copied from x64: {copied}/{len(binaries)}")
+                    print("skip (no native verified Windows ARM64 package)")
                     continue
 
                 url = f"{MKVTOOLNIX_URL}/{filename}"
@@ -569,7 +528,7 @@ class BinaryDownloader:
             target_dir.mkdir(parents=True, exist_ok=True)
             dest = target_dir / filename
 
-            if self._download(asset["url"], dest, session=gh_session, headers={"Accept": "application/octet-stream"}):
+            if self._download(asset["browser_download_url"], dest):
                 if platform_name != "windows":
                     os.chmod(dest, 0o755)
                 self._add_path(platform_name, arch, tool, filename)
@@ -579,29 +538,6 @@ class BinaryDownloader:
         if not downloaded:
             print("  X no Velora asset downloaded")
             return
-
-        # Safety guard: refuse to publish if the downloaded binary's own
-        # reported version does not match the Cargo.toml version we expect.
-        # This protects against the release build still being in flight
-        # while Cargo.toml on main has already been bumped.
-        if VELORA_VERSION:
-            linux_x64 = next(
-                (dest for (p, a, t, _name, dest) in downloaded if p == "linux" and a == "x64" and t == "velora"),
-                None,
-            )
-            if linux_x64 is not None:
-                try:
-                    out = subprocess.run([str(linux_x64), "--version"], capture_output=True, timeout=15, text=True)
-                    reported = json.loads(out.stdout.splitlines()[0]).get("version", "")
-                except Exception as e:
-                    reported = None
-                    print(f"  ! could not verify Velora version: {str(e)[:60]}")
-
-                if reported is not None and reported != VELORA_VERSION:
-                    raise RuntimeError(
-                        f"Velora release asset reports '{reported}' but Cargo.toml is '{VELORA_VERSION}'. "
-                        "Refusing to publish a mismatched binary — the release build is likely still in flight."
-                    )
 
         self._write_version_file("velora", VELORA_VERSION or "unknown")
 
@@ -633,7 +569,7 @@ class BinaryDownloader:
             target_dir.mkdir(parents=True, exist_ok=True)
             dest = target_dir / filename
 
-            if self._download(asset["url"], dest, session=gh_session, headers={"Accept": "application/octet-stream"}):
+            if self._download(asset["browser_download_url"], dest):
                 if platform_name != "windows":
                     os.chmod(dest, 0o755)
                 self._add_path(platform_name, arch, tool, filename)
@@ -643,28 +579,6 @@ class BinaryDownloader:
         if not downloaded:
             print("  X no Flux asset downloaded")
             return
-
-        # Same guard as Velora, but `flux --version` prints plain text
-        # ("flux 0.5.0"), not JSON, so the version is matched with a regex.
-        if FLUX_VERSION:
-            linux_x64 = next(
-                (dest for (p, a, t, _name, dest) in downloaded if p == "linux" and a == "x64" and t == "flux"),
-                None,
-            )
-            if linux_x64 is not None:
-                try:
-                    out = subprocess.run([str(linux_x64), "--version"], capture_output=True, timeout=15, text=True)
-                    m = re.search(r"(\d+\.\d+\.\d+)", out.stdout + out.stderr)
-                    reported = m.group(1) if m else None
-                except Exception as e:
-                    reported = None
-                    print(f"  ! could not verify Flux version: {str(e)[:60]}")
-
-                if reported is not None and reported != FLUX_VERSION:
-                    raise RuntimeError(
-                        f"Flux release asset reports '{reported}' but flux/Cargo.toml is '{FLUX_VERSION}'. "
-                        "Refusing to publish a mismatched binary — the release build is likely still in flight."
-                    )
 
         self._write_version_file("flux", FLUX_VERSION or "unknown")
 
@@ -737,9 +651,7 @@ class BinaryDownloader:
                 archive_name = deno_map.get(platform_name, {}).get(arch)
                 if not archive_name:
                     if platform_name == 'windows' and arch == 'x86':
-                        copied = self._copy_binary('windows', 'x64', arch, 'deno')
-                        print(f"copied from x64: {copied}/1")
-                        any_success = any_success or copied > 0
+                        print("skip (no native verified x86 build)")
                     else:
                         print("skip")
                     continue
@@ -802,8 +714,6 @@ class BinaryDownloader:
     def run(self, only: list[str] | None = None):
         tools = {
             "ffmpeg": self.download_ffmpeg,
-            "bento4": self.download_bento4,
-            "shaka": self.download_shaka_packager,
             "dovi_tool": self.download_dovi_tool,
             "mkvtoolnix": self.download_mkvtoolnix,
             "velora": self.download_velora,
@@ -818,12 +728,17 @@ class BinaryDownloader:
                 fn()
             else:
                 print(f"Unknown tool ignored: {name}")
+        if self.failures:
+            raise RuntimeError(
+                f"Refusing to publish partially verified downloads ({len(self.failures)} failures):\n"
+                + "\n".join(self.failures)
+            )
         self.save_paths_json()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download/update third-party binaries.")
-    parser.add_argument("--only", help="Comma-separated list: ffmpeg,bento4,shaka,dovi_tool,mkvtoolnix,velora,flux,yt-dlp,deno")
+    parser.add_argument("--only", help="Comma-separated list: ffmpeg,dovi_tool,mkvtoolnix,velora,flux,yt-dlp,deno")
     args = parser.parse_args()
 
     only_list = [t.strip() for t in args.only.split(",")] if args.only else None

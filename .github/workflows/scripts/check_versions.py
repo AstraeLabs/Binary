@@ -56,33 +56,6 @@ def latest_ffmpeg() -> str:
     return best
 
 
-def latest_shaka_packager() -> str:
-    """Latest tag on shaka-project/shaka-packager, format 'vX.Y.Z'."""
-    r = session.get(
-        "https://api.github.com/repos/shaka-project/shaka-packager/releases/latest",
-        timeout=30,
-    )
-    r.raise_for_status()
-    tag = r.json().get("tag_name", "")
-    if not tag:
-        raise RuntimeError("No tag found for shaka-project/shaka-packager")
-    return tag
-
-
-def latest_bento4() -> str:
-    """Latest Bento4 version published on bok.net, format 'X-Y-Z-BUILD'."""
-    r = session.get("https://www.bok.net/Bento4/binaries/", timeout=30)
-    r.raise_for_status()
-    versions = set(re.findall(r"Bento4-SDK-(\d+-\d+-\d+-\d+)\.", r.text))
-    if not versions:
-        raise RuntimeError("No Bento4 version found in the bok.net directory")
-
-    def key(v: str):
-        return tuple(int(x) for x in v.split("-"))
-
-    return max(versions, key=key)
-
-
 def latest_dovi_tool() -> str:
     """Latest tag on quietvoid/dovi_tool, format 'X.Y.Z'."""
     r = session.get(
@@ -164,8 +137,6 @@ def latest_deno() -> str:
 def main():
     checks = {
         "ffmpeg": latest_ffmpeg,
-        "bento4": latest_bento4,
-        "shaka": latest_shaka_packager,
         "dovi_tool": latest_dovi_tool,
         "mkvtoolnix": latest_mkvtoolnix,
         "velora": latest_velora,

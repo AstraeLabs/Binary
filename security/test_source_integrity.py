@@ -1,11 +1,9 @@
 """Offline regression tests for fail-closed download integrity controls."""
 import hashlib
 import importlib.util
-import io
 import json
 import tempfile
 import unittest
-import zipfile
 from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "scripts" / "download_binaries.py"
@@ -73,6 +71,39 @@ class SourceIntegrityTests(unittest.TestCase):
         self.assertEqual(session.calls, 0)
         self.assertFalse(self.destination.exists())
 
+    def test_new_release_without_pin_uses_publisher_digest(self):
+        url = "https://github.com/AstraeLabs/Flux/releases/download/Init/flux-linux-x64"
+        self.downloader._digest_cache[("github.com", "AstraeLabs/Flux/releases/download/Init")] = {
+            "flux-linux-x64": self.good_hash
+        }
+        self.assertTrue(self.downloader._download(url, self.destination, session=FakeSession(self.good_bytes)))
+        self.assertEqual(self.destination.read_bytes(), self.good_bytes)
+
+    def test_publisher_digest_mismatch_refused(self):
+        url = "https://github.com/AstraeLabs/Flux/releases/download/Init/flux-linux-x64"
+        self.downloader._digest_cache[("github.com", "AstraeLabs/Flux/releases/download/Init")] = {
+            "flux-linux-x64": "0" * 64
+        }
+        self.assertFalse(self.downloader._download(url, self.destination, session=FakeSession(self.good_bytes)))
+        self.assertFalse(self.destination.exists())
+
+    def test_asset_without_publisher_digest_refused(self):
+        url = "https://github.com/AstraeLabs/Flux/releases/download/Init/flux-linux-x64"
+        self.downloader._digest_cache[("github.com", "AstraeLabs/Flux/releases/download/Init")] = {}
+        session = FakeSession(self.good_bytes)
+        self.assertFalse(self.downloader._download(url, self.destination, session=session))
+        self.assertEqual(session.calls, 0)
+
+    def test_github_release_digests_parsed_from_api(self):
+        self.downloader._github_api = lambda path: {
+            "assets": [
+                {"name": "flux-linux-x64", "digest": f"sha256:{self.good_hash}"},
+                {"name": "SHA256SUMS", "digest": None},
+            ]
+        } if path == "/repos/AstraeLabs/Flux/releases/tags/Init" else {}
+        url = "https://github.com/AstraeLabs/Flux/releases/download/Init/flux-linux-x64"
+        self.assertEqual(self.downloader._expected_sha256(url), self.good_hash)
+
     def test_non_https_refused(self):
         url = "http://example.invalid/test.bin"
         self.downloader.trusted_sha256[url] = self.good_hash
@@ -80,35 +111,16 @@ class SourceIntegrityTests(unittest.TestCase):
         self.assertFalse(self.downloader._download(url, self.destination, session=session))
         self.assertEqual(session.calls, 0)
 
-    def test_bento4_verified_archive_is_cleaned_up(self):
-        buff = io.BytesIO()
-        with zipfile.ZipFile(buff, "w") as archive:
-            archive.writestr("Bento4/bin/mp4decrypt.exe", b"test-decrypt")
-            archive.writestr("Bento4/bin/mp4dump.exe", b"test-dump")
-        content = buff.getvalue()
-        source_url = (
-            f"{module.BENTO4_URL}/Bento4-SDK-{module.BENTO4_VERSION}."
-            "x86_64-microsoft-win32.zip"
-        )
-        self.downloader.trusted_sha256[source_url] = hashlib.sha256(content).hexdigest()
-        self.downloader.session = FakeSession(content)
-        self.downloader.download_bento4()
-        target_dir = Path(self.temp.name) / "windows" / "x64" / "bento4"
-        self.assertEqual((target_dir / "mp4decrypt.exe").read_bytes(), b"test-decrypt")
-        self.assertEqual((target_dir / "mp4dump.exe").read_bytes(), b"test-dump")
-        self.assertFalse((target_dir / "bento4.zip").exists())
-        self.assertFalse(self.downloader.failures)
-
     def test_lockfile_contains_valid_hashes_and_urls(self):
         lock_path = Path(__file__).with_name("trusted_source_hashes.json")
         lock = json.loads(lock_path.read_text(encoding="utf-8"))
         self.assertEqual(lock["schema_version"], 1)
-        self.assertGreater(len(lock["sha256_by_url"]), 40)
+        self.assertGreater(len(lock["sha256_by_url"]), 15)
         for url, checksum in lock["sha256_by_url"].items():
             from urllib.parse import urlsplit
             parsed = urlsplit(url)
             self.assertEqual(parsed.scheme, "https", url)
-            self.assertIn(parsed.hostname, {"github.com", "www.bok.net", "mkvtoolnix.download"}, url)
+            self.assertIn(parsed.hostname, {"github.com", "mkvtoolnix.download"}, url)
             self.assertRegex(checksum, r"^[0-9a-f]{64}$")
 
 

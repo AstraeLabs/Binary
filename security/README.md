@@ -4,22 +4,24 @@ This fork deliberately treats every binary as untrusted until the *downloaded pa
 
 ## What is protected
 
-- `security/trusted_source_hashes.json` contains 59 exact HTTPS release-asset URL -> SHA-256 pins, recorded from the vendors' published GitHub release metadata on 2026-10-15.
-- `.github/workflows/scripts/download_binaries.py` hashes each streamed payload before it can replace an existing file. A missing pin, insecure URL, oversized response, failed download, or hash mismatch aborts publication without overwriting the previous binary.
+- `security/trusted_source_hashes.json` contains 19 exact HTTPS release-asset URL -> SHA-256 pins for immutable versioned releases, recorded from the vendors' published release metadata on 2026-10-15.
+- `.github/workflows/scripts/download_binaries.py` hashes each streamed payload against its pin or the publisher digest before it can replace an existing file. A missing digest, insecure URL, oversized response, failed download, or hash mismatch aborts publication without overwriting the previous binary.
 - Downloaded Velora/Flux executables are **never run** as part of source validation. Release version strings are not an integrity check.
 - Tests in `security/test_source_integrity.py` exercise expected success, changed payloads, missing pins, and HTTP rejection.
-- `security/audit_snapshot.py` independently hashes standalone executables already stored in this repository and checks them against pinned release assets. `--strict` fails if they differ.
-- The legacy scheduled updater was removed. Only the SHA-256-pinned refresh workflow publishes binaries. CI runs exhaustive source-byte comparisons on pull requests and the main branch.
+- `security/audit_snapshot.py` hashes the standalone executables stored in this repository and checks them against the pinned release assets. `--strict` fails if they differ; versions without a pin yet are only reported.
+- CI (`binary-security.yml`) runs the tests and re-downloads the versioned, pinned tools (yt-dlp, Deno, dovi_tool, MKVToolNix) at the versions recorded in `binaries/*.version` for a byte-for-byte comparison, and checks the format/architecture of every binary. Rolling sources (FFmpeg, Flux, Velora) are not re-compared, so a new upstream release can never break CI.
 
 ## Updating binary files
 
-After reviewing and merging this change, use **Actions > Refresh SHA-256-pinned binaries > Run workflow**. Select `all-approved` to refresh FFmpeg, Bento4 (Windows x64), Shaka Packager, dovi_tool, MKVToolNix (Windows), Velora, Flux, yt-dlp and Deno. The workflow validates all downloaded source payloads against this repository's pins and refuses to commit if any verification fails. It runs `audit_snapshot.py --strict` and the exhaustive `audit_all_binaries.py --enforce` before committing refreshed binaries.
+Binaries are updated by the weekly **Update binaries** workflow (`main.yml`, Mondays 04:00 UTC), or on demand with **Actions > Refresh SHA-256-pinned binaries > Run workflow**. Select `all-approved` to refresh FFmpeg, dovi_tool, MKVToolNix (Windows), Velora, Flux, yt-dlp and Deno. The workflow validates all downloaded source payloads and refuses to commit if any verification fails. `all-approved` also runs `audit_snapshot.py --strict` and the exhaustive `audit_all_binaries.py --enforce` before committing.
 
-The initial one-off push workflow is restricted to the `security/verified-binary-sources-20261015` branch so the remediation branch can be verified before merging.
+The **Update binaries** workflow (`main.yml`) runs every Monday and picks up new upstream versions automatically; **Refresh SHA-256-pinned binaries** is the manual equivalent.
 
-**Bento4 Windows x64 and MKVToolNix Windows x64/x86 are now pinned.** Bento4 ZIP SHA-256 is cross-checked with the ScoopInstaller/Main manifest; MKVToolNix 100.0 ZIP SHA-256 values are from the publisher's sha256sums.txt. Unverifiable Bento4 macOS/Linux binaries and x64 copies mislabelled as other architectures have been removed. Their existing binaries are **not certified safe**. Do not refresh those products from an unverified URL. First obtain authentic vendor-provided checksums/signatures (or reproducibly build from audited source), add exact URL/hash pins in a reviewed commit, and then run the updater. Unsupported architectures are absent from binary_paths.json and cannot be published. Do not add them back without source authenticity evidence.
+**MKVToolNix Windows x64/x86 are pinned** from the publisher's sha256sums.txt. Unsupported architectures are absent from binary_paths.json and cannot be published. Do not add them back without source authenticity evidence.
 
-To approve a new upstream release, review the vendor's announcement, signatures/checksums, source changes and provenance, replace the appropriate immutable SHA-256 pin(s), update version defaults or pinned source URLs, and let CI validate before merging. Avoid pinning movable `latest` URLs unless the expected SHA-256 remains locked.
+**New upstream releases need no edits.** `security/trusted_source_hashes.json` pins immutable, versioned assets (yt-dlp, Deno, dovi_tool, MKVToolNix). Anything without a pin — a newer version of those tools, and the rolling sources Flux (`Init`), Velora (`init`) and FFmpeg-Builds (`latest`), whose assets are re-uploaded under the same tag — is verified against the SHA-256 the publisher lists for that exact release (GitHub's asset `digest`, or MKVToolNix's `sha256sums.txt`). A download with no publisher digest, or whose bytes differ from it, is refused and nothing is committed.
+
+To approve a new upstream release, review the vendor's announcement, signatures/checksums, source changes and provenance, add an immutable SHA-256 pin for it if you want a stronger guarantee than the publisher digest, and let CI validate before merging. Never pin movable URLs such as `latest` or a re-uploaded tag.
 
 ## Remaining limits
 

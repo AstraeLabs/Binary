@@ -111,6 +111,17 @@ class SourceIntegrityTests(unittest.TestCase):
         self.assertFalse(self.downloader._download(url, self.destination, session=session))
         self.assertEqual(session.calls, 0)
 
+    def test_manual_refresh_defaults_to_checked_in_release(self):
+        import os
+        from unittest.mock import patch
+        root = Path(__file__).resolve().parents[1]
+        for tool, env in (("yt-dlp", "YT_DLP_VERSION"), ("mkvtoolnix", "MKVTOOLNIX_VERSION"), ("deno", "DENO_VERSION")):
+            version = (root / "binaries" / f"{tool}.version").read_text(encoding="utf-8").strip()
+            with patch.dict(os.environ, {env: ""}):
+                self.assertEqual(module._configured_version(tool, env, "outdated"), version)
+            with patch.dict(os.environ, {env: "2099.01.01"}):
+                self.assertEqual(module._configured_version(tool, env, "outdated"), "2099.01.01")
+
     def test_lockfile_contains_valid_hashes_and_urls(self):
         lock_path = Path(__file__).with_name("trusted_source_hashes.json")
         lock = json.loads(lock_path.read_text(encoding="utf-8"))

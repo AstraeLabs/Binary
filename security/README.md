@@ -4,7 +4,7 @@ This fork deliberately treats every binary as untrusted until the *downloaded pa
 
 ## What is protected
 
-- `security/trusted_source_hashes.json` contains 19 exact HTTPS release-asset URL -> SHA-256 pins for immutable versioned releases, recorded from the vendors' published release metadata on 2026-10-15.
+- `security/trusted_source_hashes.json` contains 33 exact HTTPS release-asset URL -> SHA-256 pins for immutable versioned releases, including newly reviewed yt-dlp 2026.10.21, Deno v2.9.8 and MKVToolNix 103.0 published assets checked on 2026-10-26.
 - `.github/workflows/scripts/download_binaries.py` hashes each streamed payload against its pin or the publisher digest before it can replace an existing file. A missing digest, insecure URL, oversized response, failed download, or hash mismatch aborts publication without overwriting the previous binary.
 - Downloaded Velora/Flux executables are **never run** as part of source validation. Release version strings are not an integrity check.
 - Tests in `security/test_source_integrity.py` exercise expected success, changed payloads, missing pins, and HTTP rejection.
@@ -29,3 +29,10 @@ To approve a new upstream release, review the vendor's announcement, signatures/
 - Archive hashing authenticates a pinned archive, not independently the provenance of each extracted executable. Reproducible builds, vendor signatures, and sandbox analysis are still required for stronger guarantees.
 - The flagged `VibraVid_win_2025_x64.exe` belongs to **AstraeLabs/VibraVid**, not this Binary fork. Patching this fork does not rebuild, disinfect, or replace that installer.
 - Previously committed binary objects and Git history remain available even after a clean refresh. Never describe the fork as fully malware-free based solely on these controls.
+
+## Audited refresh on 2026-10-26
+
+- [Verified GitHub Actions run](https://github.com/Rafaellaerin/Binary/actions/runs/40374459713) passed Git LFS verification, integrity regression tests, official asset SHA-256 checks, strict yt-dlp standalone checks, and full byte-for-byte upstream release audit.
+- [Binary commit](https://github.com/Rafaellaerin/Binary/commit/b7063f2fe56e6ebf4303c4ef5560b64f73b2d210) updated seven yt-dlp executables (2026.08.19 -> 2026.10.21) and six Windows MKVToolNix executables (100.0 -> 103.0); Deno v2.9.8 was re-verified and unchanged.
+- The downloader reads `binaries/*.version` when no explicit environment override is given. This prevents future manual refresh workflows from downgrading to stale script defaults.
+- The one-shot workflow for this refresh was removed on completion. The existing weekly/manual updater workflows remain.

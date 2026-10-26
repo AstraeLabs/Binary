@@ -13,14 +13,26 @@ from urllib.parse import urlsplit
 import requests
 
 
-# Default versions (overridden by env vars, e.g. by the workflow after it
-# detects a newer version).
-FFMPEG_VERSION = os.environ.get("FFMPEG_VERSION", "n9.0")             # BtbN/FFmpeg-Builds release branch (nX.Y)
-DOVI_TOOL_VERSION = os.environ.get("DOVI_TOOL_VERSION", "2.3.4")
-MKVTOOLNIX_VERSION = os.environ.get("MKVTOOLNIX_VERSION", "100.0")
-VELORA_VERSION = os.environ.get("VELORA_VERSION", "2.2.0")                  # Cargo.toml version on AstraeLabs/Velora@main
-YT_DLP_VERSION = os.environ.get("YT_DLP_VERSION", "2026.08.19")                  # release tag on yt-dlp/yt-dlp
-DENO_VERSION = os.environ.get("DENO_VERSION", "v2.9.7")                      # release tag on denoland/deno
+# Manual refreshes default to the version already checked into the repository.
+# A weekly release-check job may override the version via environment variables.
+def _configured_version(tool: str, env_name: str, fallback: str) -> str:
+    override = os.environ.get(env_name)
+    if override and override.strip():
+        return override.strip()
+    version_file = Path(__file__).resolve().parents[3] / "binaries" / f"{tool}.version"
+    if version_file.is_file():
+        recorded = version_file.read_text(encoding="utf-8").strip()
+        if recorded:
+            return recorded
+    return fallback
+
+
+FFMPEG_VERSION = _configured_version("ffmpeg", "FFMPEG_VERSION", "n9.0")
+DOVI_TOOL_VERSION = _configured_version("dovi_tool", "DOVI_TOOL_VERSION", "2.3.4")
+MKVTOOLNIX_VERSION = _configured_version("mkvtoolnix", "MKVTOOLNIX_VERSION", "103.0")
+VELORA_VERSION = _configured_version("velora", "VELORA_VERSION", "2.2.0")
+YT_DLP_VERSION = _configured_version("yt-dlp", "YT_DLP_VERSION", "2026.10.21")
+DENO_VERSION = _configured_version("deno", "DENO_VERSION", "v2.9.8")
 
 FFMPEG_URL_BASE = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
 DOVI_TOOL_URL_BASE = "https://github.com/quietvoid/dovi_tool/releases/download"
@@ -57,7 +69,7 @@ VELORA_ASSET_MAP: Dict[str, Tuple[str, str, str, str]] = {
     "velora-termux-arm":     ("linux",   "arm",   "velora_termux", "velora"),
 }
 
-FLUX_VERSION = os.environ.get("FLUX_VERSION", "0.5.2")                      # Cargo.toml version on AstraeLabs/Flux@main
+FLUX_VERSION = _configured_version("flux", "FLUX_VERSION", "0.5.2")                      # Cargo.toml version on AstraeLabs/Flux@main
 FLUX_OWNER = "AstraeLabs"
 FLUX_REPO = "Flux"
 FLUX_TAG = "Init"

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy": "Exact SHA-256 pins for immutable, versioned release assets, recorded from vendor-published release metadata on 2026-10-15. Rolling sources (Flux, Velora, FFmpeg-Builds 'latest') and releases without a pin yet are verified against the digest the publisher lists for that release at download time. Verify provenance independently; a digest alone does not prove malware-free content.",
+  "policy": "Exact SHA-256 pins for immutable, versioned release assets. yt-dlp 2026.10.21 and Deno v2.9.8 are pinned to official GitHub release-asset SHA-256 digests as checked 2026-10-26; MKVToolNix 103.0 is pinned to publisher sha256sums.txt. Historical releases retained for audit. Rolling upstream tags require a publisher SHA-256 digest and remain unpinned.",
   "sha256_by_url": {
     "https://github.com/denoland/deno/releases/download/v2.9.7/deno-aarch64-apple-darwin.zip": "5cd46d6268f6f78f5d88bdc7159d20bd44cdaa4b3303474839f87ec6fe7ae25c",
     "https://github.com/denoland/deno/releases/download/v2.9.7/deno-aarch64-pc-windows-msvc.zip": "c4c4ac8bfdaa37814bda5c05fc9cdf2154904e2ef8277673a30bdceaaa649807",
@@ -20,7 +20,21 @@
     "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_macos": "0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202",
     "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_x86.exe": "a8f91bd41452506bc81ebd2f369b186fea0ee7075413ba00cef9fd346a0a5d0c",
     "https://mkvtoolnix.download/windows/releases/100.0/mkvtoolnix-32-bit-100.0.zip": "5cb4932f72d1a2daa4348ee96ee74d1731002d082d1748fc962873c28fcefa7f",
-    "https://mkvtoolnix.download/windows/releases/100.0/mkvtoolnix-64-bit-100.0.zip": "5b9f0cf3c52a2f0d9e03e3b36413d42ad6ef455d8f4eeffb70a43e3b7df29c00"
+    "https://mkvtoolnix.download/windows/releases/100.0/mkvtoolnix-64-bit-100.0.zip": "5b9f0cf3c52a2f0d9e03e3b36413d42ad6ef455d8f4eeffb70a43e3b7df29c00",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp.exe": "33121d192d706e62f684a06f80918e3f3a8ba52ac3a65213b6951c39c7d9f555",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp_arm64.exe": "1380a9f105302764e6a5d383c2f07238ae242f0f4fbf3414aea00e56619a79b3",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp_linux": "d8bd33fca9d5b23bd5b9952b3fca36db5c46331933fda9f598a3da14ce2c243f",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp_linux_aarch64": "e137c2171b0b8ef648e6136e86aa70c65923e93e434f01c93901d64744b190aa",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp_macos": "7a6fe71d7d680f1fb0ac18d4949873d77db2859e90017c0f44bd94b23be4ee40",
+    "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp_x86.exe": "7ce38c77db13db50c64e656b1056a0448e6c38ec0f0ccf28e30dd5271c008850",
+    "https://github.com/denoland/deno/releases/download/v2.9.8/deno-aarch64-apple-darwin.zip": "9f0bf660393da2eaff044cdc7444cb08c73f235849b61d224d825a194ce7c98e",
+    "https://github.com/denoland/deno/releases/download/v2.9.8/deno-aarch64-pc-windows-msvc.zip": "b413b92b735b50c198e8fe3b85af1aa50e29d5f72e229aab701d132286e14cef",
+    "https://github.com/denoland/deno/releases/download/v2.9.8/deno-aarch64-unknown-linux-gnu.zip": "d49596c20b9788cf8f5d8ddf644103d4bde56ed239753f0bdb92ba9361d51905",
+    "https://github.com/denoland/deno/releases/download/v2.9.8/deno-x86_64-apple-darwin.zip": "4b2f5edd2639b7470f034238b321d7002d8dfb4726d8558f52c17afac370eb2c",
+    "https://github.com/denoland/deno/releases/download/v2.9.8/deno-x86_64-pc-windows-msvc.zip": "cba84b26e0df5ae7f74fc66b86a95b866872a86292ebd84fa1e959927edd93bf",
+    "https://github.com/denoland/deno/releases/download/v2.9.8/deno-x86_64-unknown-linux-gnu.zip": "e890975bc2549807bbcc0b584ffafda72cc7c93349dd99c80483dd784f6c4609",
+    "https://mkvtoolnix.download/windows/releases/103.0/mkvtoolnix-32-bit-103.0.zip": "1c3dd85e7e2e4412eb2f85d3c10731b4574de10bb7bc51e020ae90ab4b86dc88",
+    "https://mkvtoolnix.download/windows/releases/103.0/mkvtoolnix-64-bit-103.0.zip": "c860a10c707cb1ee587d1464f6171842f2ada3bb6f031dfff55fec75542f0417"
   },
-  "provenance_notes": "MKVToolNix 100.0 ZIPs checked with publisher's sha256sums.txt at mkvtoolnix.download/windows/releases/100.0/."
+  "provenance_notes": "2026-10-26: pinned yt-dlp 2026.10.21 and Deno v2.9.8 from official GitHub Releases API digest fields, MKVToolNix 103.0 from https://mkvtoolnix.download/windows/releases/103.0/sha256sums.txt. Older pinned releases retained."
 }

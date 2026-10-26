@@ -7,25 +7,6 @@
     "windows/arm64/ffmpeg/ffmpeg.exe",
     "windows/arm64/ffmpeg/ffprobe.exe"
   ],
-  "windows_x64_bento4": [
-    "windows/x64/bento4/mp4dump.exe",
-    "windows/x64/bento4/mp4decrypt.exe"
-  ],
-  "windows_x64_shaka_packager": [
-    "windows/x64/shaka_packager/packager.exe"
-  ],
-  "darwin_x64_shaka_packager": [
-    "darwin/x64/shaka_packager/packager"
-  ],
-  "darwin_arm64_shaka_packager": [
-    "darwin/arm64/shaka_packager/packager"
-  ],
-  "linux_x64_shaka_packager": [
-    "linux/x64/shaka_packager/packager"
-  ],
-  "linux_arm64_shaka_packager": [
-    "linux/arm64/shaka_packager/packager"
-  ],
   "windows_x64_dovi_tool": [
     "windows/x64/dovi_tool/dovi_tool.exe"
   ],

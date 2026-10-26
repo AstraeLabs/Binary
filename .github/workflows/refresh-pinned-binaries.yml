@@ -11,19 +11,12 @@ on:
         options:
           - all-approved
           - ffmpeg
-          - bento4
           - mkvtoolnix
-          - shaka
           - dovi_tool
           - velora
           - flux
           - yt-dlp
           - deno
-  push:
-    branches:
-      - security/verified-binary-sources-20261015
-    paths:
-      - .github/workflows/refresh-pinned-binaries.yml
 
 permissions:
   contents: write
@@ -71,10 +64,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$GROUP" = "all-approved" ]; then
-            tools="ffmpeg,bento4,shaka,dovi_tool,mkvtoolnix,velora,flux,yt-dlp,deno"
+            tools="ffmpeg,dovi_tool,mkvtoolnix,velora,flux,yt-dlp,deno"
           else
             case "$GROUP" in
-              ffmpeg|bento4|shaka|dovi_tool|mkvtoolnix|velora|flux|yt-dlp|deno) tools="$GROUP" ;;
+              ffmpeg|dovi_tool|mkvtoolnix|velora|flux|yt-dlp|deno) tools="$GROUP" ;;
               *) echo "Unsupported group: $GROUP" >&2; exit 1 ;;
             esac
           fi

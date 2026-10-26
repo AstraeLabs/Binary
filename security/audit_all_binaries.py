@@ -1,19 +1,30 @@
-"""Re-fetch pinned upstream sources and compare every published binary byte.
+"""Re-fetch versioned upstream sources and compare the published binaries byte for byte.
 
 Passing this audit means byte-for-byte equality with files extracted from
-SHA-256-pinned upstream archives. It does not prove upstream is malware-free.
+digest-verified upstream releases, and that every binary has a valid format and
+architecture. It does not prove upstream is malware-free.
 """
 import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import struct
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOWNLOADER = ROOT / ".github" / "workflows" / "scripts" / "download_binaries.py"
-TOOLS = ["ffmpeg", "bento4", "shaka", "dovi_tool", "mkvtoolnix", "velora", "flux", "yt-dlp", "deno"]
+# Byte-for-byte re-download only for immutable, versioned releases. FFmpeg-Builds
+# 'latest', Flux and Velora are re-uploaded under the same tag, so a newer upstream
+# release must never fail this audit; they are verified at download time instead.
+TOOLS = ["dovi_tool", "mkvtoolnix", "yt-dlp", "deno"]
+VERSION_ENV = {
+    "dovi_tool": "DOVI_TOOL_VERSION",
+    "mkvtoolnix": "MKVTOOLNIX_VERSION",
+    "yt-dlp": "YT_DLP_VERSION",
+    "deno": "DENO_VERSION",
+}
 
 
 def digest(path):
@@ -59,6 +70,11 @@ def check_architecture(path, rel):
 
 
 def audit():
+    # Re-download exactly the versions recorded in binaries/*.version.
+    for tool, env_name in VERSION_ENV.items():
+        version_file = ROOT / "binaries" / f"{tool}.version"
+        if version_file.is_file():
+            os.environ[env_name] = version_file.read_text(encoding="utf-8").strip()
     spec = importlib.util.spec_from_file_location("pinned_downloader", DOWNLOADER)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -78,6 +94,8 @@ def audit():
             f"extra={sorted(committed_paths-set(wanted))}"
         )
 
+    compared = {path for path in wanted if path.split("/")[2] in TOOLS}
+
     with tempfile.TemporaryDirectory(prefix="source-binary-audit-") as tmp:
         downloader = module.BinaryDownloader(base_path=tmp)
         downloader.run(only=TOOLS)  # All requests hash-verified before extraction
@@ -86,15 +104,15 @@ def audit():
             for file in Path(tmp).rglob("*")
             if file.is_file() and not file.name.endswith(".version")
         }
-        if set(wanted) != recreated:
-            raise ValueError(f"Recreated binaries differ: missing={sorted(set(wanted)-recreated)} extra={sorted(recreated-set(wanted))}")
-        for rel in sorted(set(wanted)):
-            original, approved = ROOT / "binaries" / rel, Path(tmp) / rel
-            actual_sha, expected_sha = digest(original), digest(approved)
+        if compared != recreated:
+            raise ValueError(f"Recreated binaries differ: missing={sorted(compared-recreated)} extra={sorted(recreated-compared)}")
+        for rel in sorted(compared):
+            actual_sha, expected_sha = digest(ROOT / "binaries" / rel), digest(Path(tmp) / rel)
             if actual_sha != expected_sha:
                 raise ValueError(f"Mismatch {rel}: local={actual_sha} source={expected_sha}")
-            check_architecture(original, rel)
-        print(f"PASS: {len(wanted)}/{len(wanted)} binaries match pinned upstream sources")
+        for rel in sorted(set(wanted)):
+            check_architecture(ROOT / "binaries" / rel, rel)
+        print(f"PASS: {len(compared)}/{len(wanted)} binaries match their versioned upstream sources")
         print("PASS: binary formats and machine architectures are consistent")
         return len(wanted)
 

@@ -1,4 +1,4 @@
-import argparse
+﻿import argparse
 import hashlib
 import json
 import os
@@ -15,12 +15,12 @@ import requests
 
 # Default versions (overridden by env vars, e.g. by the workflow after it
 # detects a newer version).
-FFMPEG_VERSION = os.environ.get("FFMPEG_VERSION", "n9.0")             # BtbN/FFmpeg-Builds release branch (nX.Y)
-DOVI_TOOL_VERSION = os.environ.get("DOVI_TOOL_VERSION", "2.3.4")
-MKVTOOLNIX_VERSION = os.environ.get("MKVTOOLNIX_VERSION", "100.0")
-VELORA_VERSION = os.environ.get("VELORA_VERSION", "2.2.0")                  # Cargo.toml version on AstraeLabs/Velora@main
-YT_DLP_VERSION = os.environ.get("YT_DLP_VERSION", "2026.08.19")                  # release tag on yt-dlp/yt-dlp
-DENO_VERSION = os.environ.get("DENO_VERSION", "v2.9.7")                      # release tag on denoland/deno
+FFMPEG_VERSION = os.environ.get("FFMPEG_VERSION") or "n9.0"
+DOVI_TOOL_VERSION = os.environ.get("DOVI_TOOL_VERSION") or "2.3.4"
+MKVTOOLNIX_VERSION = os.environ.get("MKVTOOLNIX_VERSION") or "100.0"
+VELORA_VERSION = os.environ.get("VELORA_VERSION") or "2.2.0"
+YT_DLP_VERSION = os.environ.get("YT_DLP_VERSION") or "2026.08.19"
+DENO_VERSION = os.environ.get("DENO_VERSION") or "v2.9.7"
 
 FFMPEG_URL_BASE = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
 DOVI_TOOL_URL_BASE = "https://github.com/quietvoid/dovi_tool/releases/download"
@@ -57,7 +57,7 @@ VELORA_ASSET_MAP: Dict[str, Tuple[str, str, str, str]] = {
     "velora-termux-arm":     ("linux",   "arm",   "velora_termux", "velora"),
 }
 
-FLUX_VERSION = os.environ.get("FLUX_VERSION", "0.5.2")                      # Cargo.toml version on AstraeLabs/Flux@main
+FLUX_VERSION = os.environ.get("FLUX_VERSION") or "0.5.2"
 FLUX_OWNER = "AstraeLabs"
 FLUX_REPO = "Flux"
 FLUX_TAG = "Init"
@@ -745,3 +745,4 @@ if __name__ == "__main__":
 
     downloader = BinaryDownloader()
     downloader.run(only=only_list)
+

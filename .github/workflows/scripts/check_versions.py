@@ -73,7 +73,8 @@ def latest_mkvtoolnix() -> str:
     """Highest version directory listed under mkvtoolnix.download/windows/releases/."""
     r = session.get("https://mkvtoolnix.download/windows/releases/", timeout=30)
     r.raise_for_status()
-    versions = set(re.findall(r'href="[^"]*/releases/(\d+\.\d+)/"', r.text))
+    # Match both relative ("103.0/") and absolute ("/windows/releases/103.0/") directory links.
+    versions = set(re.findall(r'href="(?:\.?/)?(?:/windows/releases/)?(\d+(?:\.\d+)+)/?"', r.text))
     if not versions:
         raise RuntimeError("No MKVToolNix version found in the releases directory")
 
